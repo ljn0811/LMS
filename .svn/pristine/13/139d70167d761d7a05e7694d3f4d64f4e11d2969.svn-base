@@ -1,0 +1,600 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>main</title>
+<!-- sweet alert import -->
+<jsp:include page="/WEB-INF/view/common/common_include.jsp"></jsp:include>
+<!-- sweet swal import -->
+
+<script type="text/javascript">
+   
+    var pagesize = 5;
+    var pageblocksize = 10;
+   
+	/** OnLoad event */ 
+	$(function() {
+		comcombo("areaCD", "areasel", "sel", "");
+		
+		noticeseach();	
+		//noticepfssearch();
+		fRegisterButtonClickEvent();
+	});
+	
+
+	/** 버튼 이벤트 등록 */
+	function fRegisterButtonClickEvent() {
+		
+		$("#searchbtn").click(function(e) {
+			e.preventDefault();
+			noticeseach();
+		});
+
+		/* $("#searchpfsbtn").click(function(e){
+			e.preventDefault();
+			noticepfssearch();
+		}) */;
+		
+		$("#ffile").change(function(e) {
+			e.preventDefault();
+			
+			//alert($("#ffile").val());
+			// 파일선택  안할때
+			// 파일이 이미지 경우, 아닌 경우
+			// C:\fakepath\해피잡.jpg
+			
+			if($(this)[0].files[0]) {
+				//alert("파일선택");
+				var selfile = $("#ffile").val();
+				var selfilearr = selfile.split(".");
+				var ext = selfilearr[1].toLowerCase();
+				var imgpath = "";
+				var previewhtml = "";
+				
+				if(ext == "jpg" || ext == "gif" || ext == "png") {
+					imgpath = window.URL.createObjectURL($(this)[0].files[0]);					
+					///alert(imgpath);					
+					previewhtml = "<img src='" + imgpath + "' id='imgFile' style='width: 100px; height: 100px;' />";					  
+				} else {
+					previewhtml = "";
+				}
+			} else {
+				//alert("파일  선택  안함");
+				previewhtml = "";
+			}			
+			  
+			$("#preview").empty().append(previewhtml);		
+			$('input:checkbox[id="fcheck"]').attr("checked", false); 
+		});
+		
+		
+		$('a[name=btn]').click(function(e) {
+			e.preventDefault();
+
+			var btnId = $(this).attr('id');
+          
+			switch (btnId) {
+				case 'btnSave' :
+					Save();
+					break;
+				case 'btnDelete' :
+					Delete();
+					break;
+				case 'btnClose' :
+					gfCloseModal();
+					break;
+				case 'btnSavefile' :
+					fSave();
+					break;	
+				case 'btnDeletefile' :
+					fDelete();
+					break;	
+			}
+		}); 
+	}
+	
+	function noticeseach(cpage) {
+		
+		cpage = cpage || 1;
+		
+		var param = {
+				searchtitle : $("#searchtitle").val(),
+				searchstdate : $("#searchstdate").val(),
+				searcheddate : $("#searcheddate").val(),
+				cpage : cpage,
+				pagesize : pagesize,
+				usertype : '',
+		}
+		
+		console.log(param);
+		
+		var listcallback = function(respose) {
+			console.log(respose);		
+			$("#listnoticetbody").empty().append(respose);
+			
+			var paginationHtml = getPaginationHtml(cpage, $("#listcnt").val(), pagesize, pageblocksize, 'noticeseach');
+			console.log("paginationHtml : " + paginationHtml);
+	
+			$("#noticePagination").empty().append( paginationHtml );
+			
+			$("#cpage").val(cpage);
+		}
+		
+		callAjax("/notice/noticelist.do", "post", "text" , false, param, listcallback);
+		
+	}
+	
+	/* function noticepfssearch(cpage){
+		
+		cpage = cpage || 1;
+		
+		var param = {
+				searchtitle : $("#searchpfstitle").val(),
+				searchstdate : $("#searchpfsstdate").val(),
+				searcheddate : $("#searchpfseddate").val(),
+				cpage : cpage,
+				pagesize : pagesize,
+				usertype : "B"
+		}
+		
+		var listcallback = function(response){
+			console.log(response);
+			$("#listpfsnoticetbody").empty().append(response);
+			
+			var paginationHtml = getPaginationHtml(cpage, $("#listcnt").val(), pagesize, pageblocksize, "noticepfssearch");
+			console.log("paginationHtml : " + paginationHtml);
+			
+			$("#noticepfsPagination").empty().append(paginationHtml);
+			
+			$("#cpage").val(cpage);
+		}
+		
+		callAjax("/notice/noticelist.do", "post", "text" , false, param, listcallback);
+	} */
+	
+	///////////////////////////////     파일 X    Start //////////////////////////////////////
+	function newreg() {
+		// gfCloseModal();\
+		init();
+		gfModalPop("#layer1");
+	}
+	
+	function modify(notice_no) {
+		
+		var param = {
+				notice_no : notice_no
+		}
+		
+		console.log(notice_no);
+		
+		var delcallback = function(response) {
+			console.log(JSON.stringify(response));
+			
+			// {"selinfo":{"notice_no":3,"user_no":4,"notice_title":"황 테스트 3","notice_content":"황 테스트 3\n황 테스트 3\n황 테스트 3\n황 테스트 3\n황 테스트 3","created_at":"2024-03-29","notice_views":0,"name":"관리자"}}
+			init(response.selinfo);
+			gfModalPop("#layer1");
+		}
+		
+		callAjax("/notice/noticedtl.do", "post", "json" , false, param, delcallback);
+		
+		
+	}
+	
+	function init(data) {		
+		if(data != null) {
+			$("#ititle").val(data.notice_title);
+			$("#icontent").val(data.notice_content);
+			$("#btnDelete").show();
+			$("#notice_no").val(data.notice_no);
+			$("#action").val("U");			
+		} else {
+			$("#ititle").val("");
+			$("#icontent").val("");
+			$("#notice_no").val("");
+			$("#btnDelete").hide();
+			$("#action").val("I");			
+		}
+	}
+	
+	function Save() {
+		
+		// console.log($("#ititle").val());
+		// console.log($("#icontent").val());
+		
+		if(!fValidate()) {
+			return;
+		}
+		
+		var param = {
+				notice_no : $("#notice_no").val(),
+				ititle : $("#ititle").val(),
+				icontent : $("#icontent").val(),
+				action : $("#action").val(),
+		}
+		
+		var savecollback = function(response) {
+			console.log(JSON.stringify(response));
+			// {"result":"S","resultmsg":"저장 되었습니다."}
+			alert(response.resultmsg);
+			
+			if(response.result == "S") {
+				gfCloseModal();
+				if($("#action").val() == "I") {
+					noticeseach();
+					noticepfssearch();
+				} else {
+					noticeseach($("#cpage").val());
+					noticepfssearch($("#cpage").val());
+				}
+			}
+		}
+		
+		callAjax("/notice/noticesave.do", "post", "json" , false, param, savecollback);
+		
+		
+	}
+	
+	function Delete() {		
+		$("#action").val("D");		
+		Save();		
+	}
+	
+	function fValidate() {
+
+		var chk = checkNotEmpty(
+				[
+						[ "ititle", "제목를 입력해 주세요." ]
+					,	[ "icontent", "내용을 입력해 주세요" ]
+				]
+		);
+
+		if (!chk) {
+			return;
+		}
+
+		return true;
+	}
+	
+   ///////////////////////////////     파일 X    End //////////////////////////////////////
+	
+   ///////////////////////////////     파일 O    Start //////////////////////////////////////
+   function newregfile() {
+	   finit();
+	   gfModalPop("#filepopup");
+   }
+   
+	function finit(data) {		
+				
+		if(data != null) {
+			$("#fititle").val(data.notice_title);	
+			$("#ficontent").val(data.notice_content);
+			$("#btnDeletefile").show();
+			$("#notice_no").val(data.notice_no);
+			$("#action").val("U");	
+			$("#preview").empty();
+			
+			if(data.filename != null) {
+				//alert("파일선택");
+				var ext = data.fileext.toLowerCase();
+				var imgpath = "";
+				var previewhtml = "";
+				
+				if(ext == "jpg" || ext == "gif" || ext == "png") {
+					imgpath = data.logicalpath;					
+					///alert(imgpath);	
+					
+					previewhtml = "<a href='javascript:download()'>";
+					previewhtml += "<img src='" + imgpath + "' id='imgFile' style='width: 100px; height: 100px;' />";
+					previewhtml += "</a>";
+				} else {
+					previewhtml = "<a href='javascript:download()'>";
+					previewhtml += data.filename;
+					previewhtml += "</a>";
+				}
+				
+				if($("#usertype").val()== 'B') {
+					$("#btnSavefile").hide();
+					$("#btnDeletefile").hide();
+				}
+				
+			} else {
+				//alert("파일  선택  안함");
+				previewhtml = "";
+			}		
+			  
+			$("#dpreview").empty().append(previewhtml);	
+			$("#ffile").val("");
+			$('input:checkbox[id="fcheck"]').attr("checked", true); 
+		} else {
+			$("#fititle").val("");
+			$("#ficontent").val("");
+			$("#notice_no").val("");
+			$("#btnDeletefile").hide();
+			$("#action").val("I");		
+			$("#dpreview").empty();
+			$("#preview").empty();
+			$("#ffile").val("");
+			$('input:checkbox[id="fcheck"]').attr("checked", false); 
+		}
+	}
+   
+	function fSave() {
+		
+		if(!fValidatefile()) {
+			return;
+		}
+/* 		
+		var param = {
+				notice_no : $("#notice_no").val(),
+				ititle : $("#ititle").val(),
+				icontent : $("#icontent").val(),
+				action : $("#action").val(),
+		}
+		 */
+		 var frm = document.getElementById("myForm");
+		 frm.enctype = 'multipart/form-data';
+		 var fileData = new FormData(frm);		 
+		 
+		var savefilecallback = function(response) {
+			console.log(JSON.stringify(response));
+			// {"result":"S","resultmsg":"저장 되었습니다."}
+			alert(response.resultmsg);
+			
+			if(response.result == "S") {
+				gfCloseModal();
+				if($("#action").val() == "I") {
+					noticeseach();
+				} else {
+					noticeseach($("#cpage").val());
+				}
+			}
+		}
+		
+		callAjaxFileUploadSetFormData("/notice/noticesavefile.do", "post", "json" , false, fileData, savefilecallback);
+		
+	}
+	
+	function fValidatefile() {
+
+		var chk = checkNotEmpty(
+				[
+						[ "fititle", "제목를 입력해 주세요." ]
+					,	[ "ficontent", "내용을 입력해 주세요" ]
+				]
+		);
+
+		if (!chk) {
+			return;
+		}
+
+		return true;
+	}
+	
+	function fmodify(notice_no, user_no) {
+		
+		var param = {
+				notice_no : notice_no,
+				user_no : user_no
+		}
+		
+		console.log(notice_no);
+		console.log(user_no);
+		
+		var delcallback = function(response) {
+			console.log(JSON.stringify(response));
+			
+			// {"selinfo":{"notice_no":3,"user_no":4,"notice_title":"황 테스트 3","notice_content":"황 테스트 3\n황 테스트 3\n황 테스트 3\n황 테스트 3\n황 테스트 3","created_at":"2024-03-29","notice_views":0,"name":"관리자"}}
+			finit(response.selinfo);
+			gfModalPop("#filepopup");
+		}
+		
+		callAjax("/notice/noticedtl.do", "post", "json" , false, param, delcallback);
+		
+		
+	}
+	
+	function fDelete() {
+		$("#action").val("D");		
+		fSave();
+	}
+	
+	
+	function download() {	    
+	    var notice_no = $("#notice_no").val();
+	    
+		var params = "<input type='hidden' name='notice_no' value='"+ notice_no +"' />";
+
+		$("<form action='noticedownload.do' method='post' id='fileDownload'>" + params + "</form>"
+		).appendTo('body').submit().remove();
+	
+	}
+  ///////////////////////////////     파일 O    End //////////////////////////////////////
+   
+</script>
+
+</head>
+<body>
+<form id="myForm" action=""  method="">
+    <input type="hidden"  id="action"  name="action"  value="" />
+    <input type="hidden"  id="notice_no"  name="notice_no"  value="" />
+    <input type="hidden"  id="cpage"  name="cpage"  value="" />
+    <input type="hidden"  id="usertype"  name="usertype"  value="${sessionScope.userType}" />
+	
+	<!-- 모달 배경 -->
+	<div id="mask"></div>
+
+	<div id="wrap_area">
+
+		<h2 class="hidden">header 영역</h2>
+		<jsp:include page="/WEB-INF/view/common/header.jsp"></jsp:include>
+
+		<h2 class="hidden">컨텐츠 영역</h2>
+		<div id="container">
+			<ul>
+				<li class="lnb">
+					<!-- lnb 영역 --> <jsp:include
+						page="/WEB-INF/view/common/lnbMenu.jsp"></jsp:include> <!--// lnb 영역 -->
+				</li>
+				<li class="contents">
+					<!-- contents -->
+					<h3 class="hidden">contents 영역</h3> <!-- content -->
+					<div class="content">
+
+						<p class="Location">
+							<a href="../dashboard/dashboard.do" class="btn_set home">메인으로</a> 
+							<span class="btn_nav bold">main</span> 
+							<span class="btn_nav bold">메인</span>
+							 <a href="../dashboard/dashboard.do" class="btn_set refresh">새로고침</a>
+						</p>
+
+						<p class="conTitle">
+							<span>전체 공지사항</span> <span class="fr">
+							<div>
+	  	                          <strong>제목 : </strong>
+	  	                          <input type="text" id="searchtitle" name="searchtitle" style="height: 25px; margin-right: 10px;"/>
+	  	                          <strong>기간 : </strong>
+	  	                          <input type="date" id="searchstdate" name="searchstdate" style="height:28px;" /> ~ 
+	  	                          <input type="date" id="searcheddate" name="searcheddate" style="height: 28px; margin-right: 10px;" />
+	  	                          <a class="btnType blue" href="" name="searchbtn"  id="searchbtn"><span>검색</span></a>
+							  </div>	
+						</p>
+                        <br>
+       
+						<div class="divList">
+							<table class="col">
+								<caption>caption</caption>
+								<colgroup>
+									<col width="10%">
+									<col width="50%">
+									<col width="10%">
+									<col width="10%">
+									<col width="10%">
+									<col width="10%">
+								</colgroup>
+	
+								<thead>
+									<tr>
+										<th scope="col">글번호</th>
+										<th scope="col">제목</th>
+										<th scope="col">작성자</th>
+										<th scope="col">등록일</th>
+										<th scope="col">조회수</th>
+										<th scope="col"></th>
+									</tr>
+								</thead>
+								<tbody id="listnoticetbody"></tbody>
+							</table>
+						</div>
+	                    
+						<div class="paging_area"  id="noticePagination"> </div>
+						
+					</div> <!--// content -->
+
+					<h3 class="hidden">풋터 영역</h3>
+						<jsp:include page="/WEB-INF/view/common/footer.jsp"></jsp:include>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- 모달팝업 -->
+	<div id="layer1" class="layerPop layerType2" style="width: 600px;">
+		<dl>
+			<dt>
+				<strong>공지사항 관리</strong>
+			</dt>
+			<dd class="content">
+				<!-- s : 여기에 내용입력 -->
+				<table class="row">
+					<caption>caption</caption>
+					<colgroup>
+						<col width="120px">
+						<col width="*">
+						<col width="120px">
+						<col width="*">
+					</colgroup>
+
+					<tbody>
+						<tr>
+							<th scope="row">제목 <span class="font_red">*</span></th>
+							<td colspan=3><input type="text" class="inputTxt p100" name="ititle" id="ititle" /></td>
+						</tr>
+						<tr>
+							<th scope="row">내용 <span class="font_red">*</span></th>
+							<td colspan="3"><textarea  name="icontent" id="icontent"  cols="40" rows="5"> </textarea>							
+						</tr>				
+					</tbody>
+				</table>
+
+				<!-- e : 여기에 내용입력 -->
+
+				<div class="btn_areaC mt30">
+					<a href=""	class="btnType gray"  id="btnClose" name="btn"><span>닫기</span></a>
+				</div>
+			</dd>
+		</dl>
+		<a href="" class="closePop"><span class="hidden">닫기</span></a>
+	</div>
+	
+	<div id="filepopup" class="layerPop layerType2" style="width: 600px;">
+		<dl>
+			<dt>
+				<strong>공지사항 관리(파일)</strong>
+			</dt>
+			<dd class="content">
+				<!-- s : 여기에 내용입력 -->
+				<table class="row">
+					<caption>caption</caption>
+					<colgroup>
+						<col width="120px">
+						<col width="*">
+						<col width="120px">
+						<col width="*">
+					</colgroup>
+
+					<tbody>
+						<tr>
+							<th scope="row">제목 <span class="font_red">*</span></th>
+							<td colspan=3><input type="text" class="inputTxt p100" name="fititle" id="fititle" /></td>
+						</tr>
+						<tr>
+							<th scope="row">내용 <span class="font_red">*</span></th>
+							<td colspan="3"><textarea  name="ficontent" id="ficontent"  cols="40" rows="5"> </textarea></td>							
+						</tr>				
+						<tr>
+							<th scope="row">파일</th>
+							<td colspan="3"> 
+							              <input type="file" class="inputTxt p100" name="ffile" id="ffile" /> 
+							              기존 파일 유지 여부 <input type="checkbox" name="fcheck" id="fcheck"  true-value="Y" false-value="N" />
+							</td>							
+						</tr>							
+						<tr>
+							<th scope="row">미리보기(신규) </th>
+							<td> <div id="preview"></div> </td>		
+							<th scope="row">미리보기(상세) </th>
+							<td> <div id="dpreview"></div> </td>						
+						</tr>							
+					</tbody> 
+				</table>
+
+				<!-- e : 여기에 내용입력 -->
+
+				<div class="btn_areaC mt30">
+						<a href="" class="btnType blue" id="btnSavefile" name="btn"><span>저장</span></a> 
+						<a href="" class="btnType blue" id="btnDeletefile" name="btn"><span>삭제</span></a> 
+						<a href=""	class="btnType gray"  id="btnClose" name="btn"><span>취소</span></a>
+				</div>
+			</dd>
+		</dl>
+		<a href="" class="closePop"><span class="hidden">닫기</span></a>
+	</div>	
+
+	<!--// 모달팝업 -->
+</form>
+</body>
+</html>

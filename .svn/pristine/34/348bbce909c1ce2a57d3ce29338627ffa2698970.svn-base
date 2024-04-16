@@ -1,0 +1,34 @@
+package kr.happyjob.study.tut.service;
+
+import java.util.List;
+import java.util.Map;
+
+import kr.happyjob.study.tut.model.LecturePlanVO;
+
+public interface LecturePlanService {
+
+	/** 목록 조회 */
+	public List<LecturePlanVO> lecturePlan(Map<String, Object> paramMap) throws Exception;
+	
+	/** 유저정보 단건조회 조회 */
+	public LecturePlanVO lecUserinfo(Map<String, Object> paramMap) throws Exception;
+	
+	/** 목록 조회 */
+	public List<LecturePlanVO> lecturePlanList(Map<String, Object> paramMap) throws Exception;
+	
+	/** 카운트 조회 */
+	public int lecturePlanCnt(Map<String, Object> paramMap) throws Exception;
+	
+	/** 상세 조회 */
+	public LecturePlanVO lecturePlanDetail(Map<String, Object> paramMap) throws Exception;
+
+	/** 등록 */
+	public int lecturePlanSave(Map<String, Object> paramMap) throws Exception;
+	
+	/** 수정 */
+	public int lecturePlanUpdate(Map<String, Object> paramMap) throws Exception;	
+	
+	/** 삭제 */
+	public int lecturePlanDelete(Map<String, Object> paramMap) throws Exception;
+	
+}

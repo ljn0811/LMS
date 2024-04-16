@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.SurveyDao">
+
+	<select id="surveyList" resultType="kr.happyjob.study.adm.model.SurveyVO">
+		SELECT tl.lec_nm
+			, ui.name
+			, tl.lec_start
+			, tl.lec_end
+			, cm.classroom_nm
+		FROM tb_lecture tl
+		INNER JOIN tb_classroom_mgt cm ON cm.classroom_no = tl.classroom_no
+		INNER JOIN tb_userinfo ui ON ui.user_no = tl.user_no
+	</select>
+		
+</mapper>

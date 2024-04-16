@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="kr.happyjob.study.std.dao.SubmitReportDao">
+
+	<select id="selReportList" resultType="kr.happyjob.study.std.model.SubmitReportVO">
+		SELECT
+		stdinfo.name as student_name,
+		hwkinfo.tutor_name,
+		hwkinfo.task_name,
+		hwkinfo.task_content,
+		DATE_FORMAT(hwkinfo.task_start, '%Y.%m.%d') AS task_start,
+		DATE_FORMAT(hwkinfo.task_end, '%Y.%m.%d') AS task_end,
+		hwkinfo.task_filename,
+		hwkinfo.task_path,
+		hwkinfo.task_filesize,
+		hwkinfo.lec_nm,
+		lecstd.apv,
+		hwkinfo.task_id,
+		lecstd.lec_no
+		FROM
+		tb_lecstd_info lecstd
+		LEFT JOIN tb_userinfo stdinfo ON lecstd.user_no = stdinfo.user_no
+		LEFT JOIN (
+		SELECT
+		hwk.task_id,
+		hwk.lec_no,
+		hwk.task_name,
+		hwk.task_content,
+		hwk.task_start,
+		hwk.task_end,
+		hwk.task_filename,
+		hwk.task_path,
+		hwk.task_filesize,
+		hwk.task_relative_path,
+		hwk.file_ext,
+		tut.name AS tutor_name,
+		tut.lec_nm,
+		hs.task_id AS hs_task_id
+		FROM
+		tb_lec_task hwk
+		LEFT JOIN tb_report_management hs ON hwk.task_id = hs.task_id
+		LEFT JOIN (
+		SELECT
+		lec.lec_no,
+		lec.lec_nm,
+		tut.name,
+		tut.user_no
+		FROM
+		tb_lecture lec
+		LEFT JOIN tb_userinfo tut ON lec.user_no = tut.user_no
+		) tut ON tut.lec_no = hwk.lec_no
+		) hwkinfo ON lecstd.lec_no = hwkinfo.lec_no
+
+		<!-- WHERE -->
+		<!-- lecstd.apv = 'Y' -->
+		<!-- AND lecstd.user_no = #{user_no} -->
+		<!-- ORDER BY -->
+		<!-- hwk.task_id DESC -->
+		<!-- LIMIT #{pageIndex}, #{pageSize}; -->
+	</select>
+
+	<!-- 과제 totalcount 구하기 -->
+	<select id="countReportList" resultType="int">
+		SELECT count(*) as total_cnt
+		FROM (
+		SELECT
+		stdinfo.name as student_name,
+		hwkinfo.tutor_name,
+		hwkinfo.task_name,
+		hwkinfo.task_content,
+		DATE_FORMAT(hwkinfo.task_start, '%Y.%m.%d') AS task_start,
+		DATE_FORMAT(hwkinfo.task_end, '%Y.%m.%d') AS task_end,
+		hwkinfo.task_filename,
+		hwkinfo.task_path,
+		hwkinfo.task_filesize,
+		hwkinfo.lec_nm,
+		lecstd.apv,
+		hwkinfo.task_id,
+		lecstd.lec_no
+		FROM
+		tb_lecstd_info lecstd
+		LEFT JOIN tb_userinfo stdinfo ON lecstd.user_no = stdinfo.user_no
+		LEFT JOIN (
+		SELECT
+		hwk.task_id,
+		hwk.lec_no,
+		hwk.task_name,
+		hwk.task_content,
+		hwk.task_start,
+		hwk.task_end,
+		hwk.task_filename,
+		hwk.task_path,
+		hwk.task_filesize,
+		hwk.task_relative_path,
+		hwk.file_ext,
+		tutinfo.name AS tutor_name,
+		tutinfo.lec_nm,
+		hs.task_id AS hs_task_id
+		FROM
+		tb_lec_task hwk
+		LEFT JOIN tb_report_management hs ON hwk.task_id = hs.task_id
+		LEFT JOIN (
+		SELECT
+		lec.lec_no,
+		lec.lec_nm,
+		tut.name,
+		tut.user_no
+		FROM
+		tb_lecture lec
+		LEFT JOIN tb_userinfo tut ON lec.user_no = tut.user_no
+		) tutinfo ON tutinfo.lec_no = hwk.lec_no
+		) hwkinfo ON lecstd.lec_no = hwkinfo.lec_no
+		) tol
+		<!-- <where> -->
+		<!-- tol.apv = 'Y' -->
+		<!-- and tol.user_no = #{user_no} -->
+		<!-- </where> -->
+	</select>
+
+	<select id="choiceReportList" resultType="kr.happyjob.study.std.model.SubmitReportVO">
+		SELECT
+		hwk.task_id,
+		hwk.task_name,
+		hwk.task_content,
+		hwk.lec_no,
+		lecture.lec_nm
+		FROM
+		tb_lec_task hwk
+		LEFT JOIN tb_lecture lecture ON hwk.lec_no = lecture.lec_no
+		WHERE
+		hwk.lec_no = #{lec_no}
+		AND hwk.task_id = #{task_id}
+	</select>
+
+
+	<!-- 과제 내용 입력 -->
+	<insert id="insertReport">
+		INSERT INTO tb_report_management (
+		user_no,
+		task_id,
+		lec_no,
+		sub_content,
+		sub_date
+		)
+		VALUES (
+		#{user_no},
+		#{task_id},
+		(SELECT lec_no FROM tb_lec_task WHERE task_id = #{task_id}), 
+		#{sub_content},
+		NOW()
+		);
+	</insert>
+
+	<!-- 과제 내용 수정 -->
+	<update id="updateReport">
+		UPDATE tb_report_management
+		SET
+		sub_content =
+		#{sub_content}
+
+		WHERE task_id = #{task_id}
+		AND user_no = #{user_no}
+	</update>
+	<!-- 과제 첨부파일 저장 및 수정 -->
+	<update id="updateReportSubFil">
+		UPDATE tb_report_management SET
+		sub_filename = #{file_nm}
+		,sub_path = #{file_loc}
+		,sub_filesize = #{file_size}
+		where task_id = #{task_id}
+		and user_no = #{user_no}
+	</update>
+
+	<!-- 삭제할 목록 가져오기 -->
+	<select id="deleteList" resultType="kr.happyjob.study.std.model.SubmitReportVO">
+		select std_id, hwk_id,
+		submit_con,submit_fname, submit_url,submit_fsize
+		from tb_hwk_submit
+		where std_id = #{loginID}
+		and hwk_id = #{hwk_id}
+	</select>
+	<update id="deleteFileInfo">
+		UPDATE tb_hwk_submit
+		SET submit_fname=DEFAULT
+		,submit_url=DEFAULT
+		,submit_fsize=DEFAULT
+		where
+		hwk_id = #{hwk_id}
+		and
+		std_id = #{std_id}
+	</update>
+
+
+
+	<!-- 과제 내용 및 첨부파일 삭제 -->
+	<delete id="deleteHwkSub">
+		DELETE FROM tb_hwk_submit
+		WHERE hwk_id=#{hwk_id}
+		and
+		std_id = #{loginID}
+	</delete>
+</mapper>

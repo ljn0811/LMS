@@ -1,0 +1,98 @@
+package kr.happyjob.study.tut.model;
+
+public class LecturePlanVO {	
+	
+	private int lecNo;
+	private int testNo;
+	private int classroomNo;
+	private int userNo;
+	private String lecNm;
+	private int lecMaxCnt;
+	private int lecCnt;
+	private String lecEtc;
+	private String lecStart;
+	private String lecEnd;
+	private String lecContent;
+	private int learnGoal;
+	private String learnPlan;
+	
+	public int getLecNo() {
+		return lecNo;
+	}
+	public void setLecNo(int lecNo) {
+		this.lecNo = lecNo;
+	}
+	public int getTestNo() {
+		return testNo;
+	}
+	public void setTestNo(int testNo) {
+		this.testNo = testNo;
+	}
+	public int getClassroomNo() {
+		return classroomNo;
+	}
+	public void setClassroomNo(int classroomNo) {
+		this.classroomNo = classroomNo;
+	}
+	public int getUserNo() {
+		return userNo;
+	}
+	public void setUserNo(int userNo) {
+		this.userNo = userNo;
+	}
+	public String getLecNm() {
+		return lecNm;
+	}
+	public void setLecNm(String lecNm) {
+		this.lecNm = lecNm;
+	}
+	public int getLecMaxCnt() {
+		return lecMaxCnt;
+	}
+	public void setLecMaxCnt(int lecMaxCnt) {
+		this.lecMaxCnt = lecMaxCnt;
+	}
+	public int getLecCnt() {
+		return lecCnt;
+	}
+	public void setLecCnt(int lecCnt) {
+		this.lecCnt = lecCnt;
+	}
+	public String getLecEtc() {
+		return lecEtc;
+	}
+	public void setLecEtc(String lecEtc) {
+		this.lecEtc = lecEtc;
+	}
+	public String getLecStart() {
+		return lecStart;
+	}
+	public void setLecStart(String lecStart) {
+		this.lecStart = lecStart;
+	}
+	public String getLecEnd() {
+		return lecEnd;
+	}
+	public void setLecEnd(String lecEnd) {
+		this.lecEnd = lecEnd;
+	}
+	public String getLecContent() {
+		return lecContent;
+	}
+	public void setLecContent(String lecContent) {
+		this.lecContent = lecContent;
+	}
+	public int getLearnGoal() {
+		return learnGoal;
+	}
+	public void setLearnGoal(int learnGoal) {
+		this.learnGoal = learnGoal;
+	}
+	public String getLearnPlan() {
+		return learnPlan;
+	}
+	public void setLearnPlan(String learnPlan) {
+		this.learnPlan = learnPlan;
+	}
+
+}

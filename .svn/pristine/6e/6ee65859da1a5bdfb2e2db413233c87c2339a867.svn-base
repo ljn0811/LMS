@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.LearningMaterialsStdDao">
+
+	<!-- 학습자료 조회 -->
+	<select id="learningMaterialsList" resultType="kr.happyjob.study.std.model.LearningMaterialsStdVO">
+		/*kr.happyjob.study.std.dao.LearningMaterialsDao.learningMaterialsList*/
+		SELECT ma.material_no
+		         ,ma.material_title
+		         ,ma.created_at
+		         ,ui.name
+		         ,ma.material_views
+		         ,ma.file_name
+		         ,ma.file_path
+		 FROM tb_materials ma
+                INNER JOIN tb_userinfo ui ON ui.user_no = ma.user_no
+               <where>
+	 				<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+	 			       AND ma.material_title Like CONCAT('%', #{searchtitle}, '%')
+	 			   </if>
+	 			   <if test="(searchstdate != null) and (!searchstdate.equals(''))">
+	 			       AND ma.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+	 			   </if>
+	 			   <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+	 			       AND ma.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+	 			   </if>
+  		      </where>
+  		ORDER BY ma.created_at DESC      
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 학습자료 카운트 조회 -->
+	<select id="learningMaterialsCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.LearningMaterialsDao.learningMaterialsCnt*/
+		SELECT COUNT(*)
+         FROM tb_materials ma
+                INNER JOIN tb_userinfo ui ON ui.user_no = ma.user_no
+            <where>
+ 			  <if test="(searchtitle != null) and (!searchtitle.equals(''))">
+ 			       AND ma.material_title Like CONCAT('%', #{searchtitle}, '%')
+ 			   </if>
+ 			   <if test="(searchstdate != null) and (!searchstdate.equals(''))">
+ 			       AND ma.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+ 			   </if>
+ 			   <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+ 			       AND ma.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+ 			   </if>
+ 			</where>
+	</select>
+	
+	<!-- 강의목록 상세조회 -->
+	<select id="learningMaterialsDtl" resultType="kr.happyjob.study.std.model.LearningMaterialsStdVO">
+	   /*kr.happyjob.study.std.dao.LearningMaterialsDao.learningMaterialsDtl*/
+       SELECT material_no
+                 ,material_title
+		         ,created_at
+		         ,material_content
+		         ,file_name
+		         ,file_path
+		 FROM tb_materials 
+                WHERE material_no = #{material_no} 
+	</select>
+	
+	<!-- 학습자료 조회수 -->
+	<update id="learningMaterialsViews">
+	     UPDATE tb_materials
+	           SET material_views = IFNULL(material_views,0) + 1 
+	       WHERE material_no = #{material_no}
+	</update>
+	
+</mapper>

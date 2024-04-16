@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.EmploymentDao">
+
+	<select id="employmentList" resultType="kr.happyjob.study.adm.model.EmployInfoVO">
+		select e.employment_no,
+		e.user_no,
+		e.company_name,
+		e.employment_day,
+		e.leaving_date,
+		e.employment_state,
+		e.etc_company,
+		e.register_state,
+		u.name AS name,
+		u.user_phone
+		FROM
+		tb_employment e
+		JOIN
+		tb_userinfo u ON e.user_no =
+		u.user_no
+		<where>
+      		<if test="(keyword != null) and (!keyword.equals(''))">
+      		<choose>
+        		<when test= "(searchKey eq 'all'.toString())">
+            		AND u.user_no LIKE concat('%', #{keyword}, '%')
+             		OR  u.name LIKE concat('%', #{keyword}, '%')
+             		OR  e.company_name LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'userNo'.toString())">
+            		AND u.user_no LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'userName'.toString())">
+            		AND u.name LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'companyName'.toString())">
+            		AND e.company_name LIKE concat('%', #{keyword}, '%')
+        		</when>
+      		</choose>
+      		</if> 
+    	</where>
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+
+	<select id="lectureUserList" resultType="kr.happyjob.study.adm.model.EmployInfoVO">
+		SELECT DISTINCT
+		l.lec_no,
+		l.lec_nm,
+		u.user_no,
+		u.name,
+		u.user_phone,
+		u.created_at,
+		e.employment_state
+		FROM
+		tb_lecstd_info ls
+		JOIN
+		tb_userinfo u ON ls.user_no
+		= u.user_no
+		JOIN
+		tb_lecture l ON ls.lec_no = l.lec_no
+		LEFT JOIN
+		tb_employment e ON u.user_no = e.user_no AND (e.employment_state = 'L'
+		OR
+		e.employment_state IS NULL) AND e.leaving_date IS NOT NULL
+		WHERE
+		NOT
+		EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND
+		employment_state = 'W' AND leaving_date IS
+		NOT NULL
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND
+		employment_state = 'W' AND leaving_date IS
+		NULL
+		)
+		AND NOT EXISTS (
+		SELECT
+		1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state =
+		'W'
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no =
+		u.user_no AND employment_state = 'W'
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM
+		tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W'
+		)
+<!--       		<if test="(keyword != null) and (!keyword.equals(''))"> -->
+<!--       		<choose> -->
+<!--         		<when test= "(searchKey eq 'all'.toString())"> -->
+<!--             		AND u.user_no LIKE concat('%', #{keyword}, '%') -->
+<!--              		OR  u.name LIKE concat('%', #{keyword}, '%') -->
+<!--              		OR  l.lec_nm LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'userNo'.toString())"> -->
+<!--             		AND u.user_no LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'userName'.toString())"> -->
+<!--             		AND u.name LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'lectureName'.toString())"> -->
+<!--             		AND l.lec_nm LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--       		</choose> -->
+<!--       		</if>  -->
+		UNION
+		SELECT DISTINCT
+		NULL AS lec_no,
+		NULL AS lec_nm,
+		e.user_no,
+		u.name,
+		u.user_phone,
+		u.created_at,
+		e.employment_state
+		FROM
+		tb_employment e
+		JOIN
+		tb_userinfo u ON e.user_no = u.user_no
+		WHERE
+		NOT EXISTS (
+		SELECT 1
+		FROM
+		tb_lecstd_info
+		WHERE user_no = e.user_no
+		)
+		AND e.employment_state != 'W'
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+
+	<select id="lectureUserCnt" resultType="int">
+		SELECT COUNT(*)
+		FROM (
+		SELECT DISTINCT
+		l.lec_no,
+		l.lec_nm,
+		u.user_no,
+		u.name,
+		u.user_phone,
+		u.created_at,
+		e.employment_state
+		FROM
+		tb_lecstd_info ls
+		JOIN tb_userinfo u ON ls.user_no = u.user_no
+		JOIN tb_lecture l ON ls.lec_no = l.lec_no
+		LEFT JOIN tb_employment e ON u.user_no = e.user_no AND (e.employment_state
+		= 'L' OR e.employment_state IS NULL) AND e.leaving_date IS NOT NULL
+		WHERE
+		NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W' AND leaving_date IS
+		NOT NULL
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W' AND leaving_date IS
+		NULL
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W'
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W'
+		)
+		AND NOT EXISTS (
+		SELECT 1
+		FROM tb_employment
+		WHERE user_no = u.user_no AND employment_state = 'W'
+		)
+<!--       		<if test="(keyword != null) and (!keyword.equals(''))"> -->
+<!--       		<choose> -->
+<!--         		<when test= "(searchKey eq 'all'.toString())"> -->
+<!--             		AND u.user_no LIKE concat('%', #{keyword}, '%') -->
+<!--              		OR  u.name LIKE concat('%', #{keyword}, '%') -->
+<!--              		OR  l.lec_nm LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'userNo'.toString())"> -->
+<!--             		AND u.user_no LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'userName'.toString())"> -->
+<!--             		AND u.name LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--         		<when test= "(searchKey eq 'lectureName'.toString())"> -->
+<!--             		AND l.lec_nm LIKE concat('%', #{keyword}, '%') -->
+<!--         		</when> -->
+<!--       		</choose> -->
+<!--       		</if>  -->
+		UNION
+		SELECT DISTINCT
+		NULL AS lec_no,
+		NULL AS lec_nm,
+		e.user_no,
+		u.name,
+		u.user_phone,
+		u.created_at,
+		e.employment_state
+		FROM
+		tb_employment e
+		JOIN tb_userinfo u ON e.user_no = u.user_no
+		WHERE
+		NOT EXISTS (
+		SELECT 1
+		FROM tb_lecstd_info
+		WHERE user_no = e.user_no
+		)
+		AND e.employment_state != 'W'
+		) AS combined_result
+	</select>
+
+	<!-- 총 갯수 조회 -->
+	<select id="employmentCnt" resultType="int">
+		select count(*)
+		from
+		tb_employment e
+		join tb_userinfo u ON e.user_no =
+		u.user_no
+		<where>
+      		<if test="(keyword != null) and (!keyword.equals(''))">
+      		<choose>
+        		<when test= "(searchKey eq 'all'.toString())">
+            		AND u.user_no LIKE concat('%', #{keyword}, '%')
+             		OR  u.name LIKE concat('%', #{keyword}, '%')
+             		OR  e.company_name LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'userNo'.toString())">
+            		AND u.user_no LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'userName'.toString())">
+            		AND u.name LIKE concat('%', #{keyword}, '%')
+        		</when>
+        		<when test= "(searchKey eq 'companyName'.toString())">
+            		AND e.company_name LIKE concat('%', #{keyword}, '%')
+        		</when>
+      		</choose>
+      		</if> 
+    	</where>
+	</select>
+
+	<select id="lectureUserdtl" resultType="kr.happyjob.study.adm.model.EmployInfoVO">
+		select u.name
+		,u.user_no
+		,u.user_phone
+		,u.loginID
+		,u.user_location
+		,u.user_birth
+		,u.user_email
+		,u.user_gender
+		,l.lec_no
+		,l.lec_nm
+		,DATE_FORMAT(l.lec_start , '%Y-%m-%d') as lec_start
+		,DATE_FORMAT(l.lec_end , '%Y-%m-%d') as lec_end
+		from
+		tb_userinfo u
+		join
+		tb_lecstd_info ls on u.user_no = ls.user_no
+		join
+		tb_lecture l on l.lec_no = ls.lec_no
+		where
+		u.user_no = #{user_no}
+	</select>
+
+	<select id="employInfodtl" resultType="kr.happyjob.study.adm.model.EmployInfoVO">
+		select e.employment_no
+		,e.company_name
+		,e.employment_day
+		,e.leaving_date
+		,e.employment_state
+		,u.name
+		,u.user_no
+		,u.user_phone
+		from
+		tb_userinfo u
+		join
+		tb_employment e
+		on u.user_no = e.user_no
+		where
+		employment_no = #{employment_no}
+	</select>
+
+	<insert id="employInfoSave">
+		<selectKey resultType="int" keyProperty="employmentNo"
+			order="BEFORE">
+			select ifnull(max(employment_no),0) + 1 from tb_employment
+		</selectKey>
+		insert into tb_employment
+		(employment_no
+		,user_no
+		,company_name
+		,employment_day
+		,leaving_date
+		,employment_state
+		,etc_company
+		,register_state)
+		values (
+		#{employmentNo},
+		#{user_no},
+		#{company_name},
+		#{employment_day},
+		#{leaving_date},
+		'W',
+		#{etc_company},
+		#{register_state}
+		)
+	</insert>
+
+	<update id="employInfoUpdate">
+		update tb_employment
+		set
+		company_name = #{company_name}
+		,employment_day = #{employment_day}
+		,leaving_date =
+		#{leaving_date}
+		,employment_state = #{employment_state}
+		where
+		employment_no = #{employment_no}
+	</update>
+
+	<delete id="employInfoDelete">
+
+		delete from tb_employment
+		where employment_no =
+		#{employment_no}
+	</delete>
+
+</mapper>

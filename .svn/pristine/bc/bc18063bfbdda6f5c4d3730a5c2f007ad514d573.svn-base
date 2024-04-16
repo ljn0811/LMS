@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.EquipmentDao">
+
+	<select id="equipmentList" resultType="kr.happyjob.study.adm.model.EquipmentVO">
+		select classroom_no
+		,tool_no
+		,tool_nm
+		,sum(tool_cnt) as tool_cnt
+		,tool_etc
+		from tb_classroom_tool
+		<where>
+			<if test="(searchEquipment != null) and (!searchEquipment.equals(''))">
+				and tool_nm like CONCAT('%', #{searchEquipment}, '%')
+			</if>
+		</where>
+		group by tool_nm
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+
+	<select id="equipmentDtlList" resultType="kr.happyjob.study.adm.model.EquipmentVO">
+		select ct.classroom_no
+		,cm.classroom_nm
+		,ct.tool_no
+		,ct.tool_nm
+		,ct.tool_cnt
+		,ct.tool_etc
+		from tb_classroom_tool ct
+		join tb_classroom_mgt cm
+		on ct.classroom_no = cm.classroom_no
+		where tool_nm = #{tool_nm}
+		LIMIT #{startpos}, #{pageSize}
+	</select>
+
+	<!-- 총 갯수 조회 -->
+	<select id="equipmentCnt" resultType="int">
+		select count(*)
+		from
+		tb_classroom_tool
+	</select>
+	
+	<select id="equipmentDtlCnt" resultType="int">
+		select count(*)
+		from
+		tb_classroom_tool
+		where tool_nm = #{tool_nm}
+	</select>
+
+	<insert id="equipmentSave">
+		<selectKey resultType="int" keyProperty="toolNo" order="BEFORE">
+			select ifnull(max(tool_no),0) + 1 from tb_classroom_tool
+		</selectKey>
+		insert into tb_classroom_tool
+		( tool_no
+		,tool_nm
+		,tool_cnt
+		,tool_etc
+		,classroom_no
+		) values (
+		#{toolNo}
+		,#{tool_nm}
+		,#{tool_cnt}
+		,#{tool_etc}
+		,#{classroom_no}
+		)
+	</insert>
+
+	<select id="equipmentdtl" resultType="kr.happyjob.study.adm.model.EquipmentVO">
+		select ct.classroom_no
+		,cm.classroom_nm
+		,ct.tool_no
+		,ct.tool_nm
+		,ct.tool_cnt
+		,ct.tool_etc
+		from tb_classroom_tool ct
+		join tb_classroom_mgt cm
+		on ct.classroom_no = cm.classroom_no
+		where tool_no = #{tool_no}
+	</select>
+	
+	<update id="equipmentUpdate">
+		update tb_classroom_tool
+		set classroom_no = #{classroom_no}
+		   ,tool_nm = #{tool_nm}
+		   ,tool_cnt = #{tool_cnt}
+		   ,tool_etc = #{tool_etc}
+		where tool_no = #{tool_no}
+	</update>
+	
+	<delete id="equipmentDelete">
+		delete from tb_classroom_tool
+		where tool_no = #{tool_no}
+	</delete>
+
+</mapper>

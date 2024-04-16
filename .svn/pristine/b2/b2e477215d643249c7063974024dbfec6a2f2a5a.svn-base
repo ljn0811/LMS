@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.ClassroomDao">
+
+   <!-- 강의 목록 조회 -->
+   <select id="classroomList" resultType="kr.happyjob.study.adm.model.ClassroomVO">
+      /*kr.happyjob.study.adm.dao.ClassroomDao.classroomList*/      
+      select  classroom_no
+      		   ,classroom_nm
+      		   ,seat_cnt
+      		   ,classroom_etc
+      		   ,classroom_size
+         from tb_classroom_mgt
+         <where>
+         	<if test="(searchClassroom != null) and (!searchClassroom.equals(''))">
+         		and classroom_nm like CONCAT('%', #{searchClassroom}, '%')
+         	</if>
+         </where>
+         LIMIT #{startpos}, #{pagesize}
+   </select>
+   
+   	<!-- 총 갯수 조회 -->
+	<select id="classroomCnt" resultType="int">
+		/*kr.happyjob.study.tut.dao.LecturePlanDao.lecturePlanCnt*/
+		select count(*)
+		from tb_classroom_mgt
+		</select> 
+		
+		  
+	<select id="equipmentCnt" resultType="int">
+		/*kr.happyjob.study.tut.dao.LecturePlanDao.lecturePlanCnt*/
+		select count(*)
+		from tb_classroom_tool
+		</select>   
+	
+	<!-- 상세조회 -->	
+	<select id="classroomdtl" resultType="kr.happyjob.study.adm.model.ClassroomVO">
+	   /*kr.happyjob.study.tut.dao.lecturePlanDao.lecturePlanDetail*/
+        select classroom_no
+        	  ,classroom_nm
+        	  ,seat_cnt
+        	  ,classroom_etc
+        	  ,classroom_size  
+		from tb_classroom_mgt
+	   where classroom_no = #{classroom_no}
+	</select>
+	
+	<!-- 신규등록 -->
+	<insert id="classroomSave">
+	    /*kr.happyjob.study.classroom.dao.ClassroomDao.classroomSave*/
+	    <selectKey resultType="int" keyProperty="classroomNo" order="BEFORE">
+            select ifnull(max(classroom_no),0) + 1 from tb_classroom_mgt
+        </selectKey> 
+	    insert into tb_classroom_mgt
+	                  (   classroom_no
+	                  	  ,classroom_nm
+	                  	  ,seat_cnt
+	                  	  ,classroom_etc
+	                  	  ,classroom_size
+	                 ) values (
+	                     #{classroomNo} 
+	                    ,#{classroom_nm} 
+	                    ,#{seat_cnt}
+	                    ,#{classroom_etc}
+	                    ,#{classroom_size}
+	                 )
+	</insert>
+	
+	<!-- 수정 -->
+	<update id="classroomUpdate">
+	      update tb_classroom_mgt
+	           set classroom_nm = #{classroom_nm}
+	               ,seat_cnt = #{seat_cnt}
+	               ,classroom_etc = #{classroom_etc}
+	               ,classroom_size = #{classroom_size}
+	       where classroom_no = #{classroom_no}
+	</update>
+	
+	<update id="lectureClassroomNoNull">
+		update tb_lecture
+			set classroom_no = null
+			where classroom_no = #{classroom_no}
+	</update>
+	
+	<!-- 삭제 -->
+	<delete id="classroomDelete">
+	      
+	      delete from tb_classroom_mgt
+	       where classroom_no = #{classroom_no}
+	</delete>
+	
+	
+</mapper>

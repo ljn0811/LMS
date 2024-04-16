@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.LectureStudentDao">
+
+	<!-- 강의 목록 조회 -->
+   <select id="lectureList" resultType="kr.happyjob.study.tut.model.LectureStudentVO">
+     SELECT 	lec_no
+    				,	lec_nm
+    				,	lec_max_cnt
+    				,	lec_start
+    				,	lec_end
+    				,	lec_content
+		FROM		tb_lecture
+		<where>
+      		<if test="(keywordLec != null) and (!keywordLec.equals(''))">
+      		<choose>
+        		<when test= "(searchLecKey eq 'all'.toString())">
+            		AND lec_nm LIKE concat('%', #{keywordLec}, '%')
+             		OR  lec_content LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+        		<when test= "(searchLecKey eq 'lec_nm'.toString())">
+            		AND lec_nm LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+        		<when test= "(searchLecKey eq 'lec_content'.toString())">
+            		AND lec_content LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+      		</choose>
+      		</if> 
+    	</where>	
+		ORDER BY lec_no DESC
+		LIMIT 	#{startpos}, #{pagesize}
+   </select>
+   
+   <!-- 총 갯수 조회 -->
+	<select id="lectureCnt" resultType="int">
+		SELECT 	count(*)
+		FROM 		tb_lecture		
+      	<where>
+      		<if test="(keywordLec != null) and (!keywordLec.equals(''))">
+      		<choose>
+        		<when test= "(searchLecKey eq 'all'.toString())">
+            		AND lec_nm LIKE concat('%', #{keywordLec}, '%')
+             		OR  lec_content LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+        		<when test= "(searchLecKey eq 'lec_nm'.toString())">
+            		AND lec_nm LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+        		<when test= "(searchLecKey eq 'lec_content'.toString())">
+            		AND lec_content LIKE concat('%', #{keywordLec}, '%')
+        		</when>
+      		</choose>
+      		</if> 
+    	</where>
+	</select>
+	
+	<select id="lectureStudentList" resultType="kr.happyjob.study.tut.model.LectureStudentVO">
+		SELECT	li.lec_no
+					,	li.user_no
+					,	u.name
+					,	u.user_phone
+					,	u.user_email
+    				,	li.apv
+		FROM	tb_lecstd_info li
+			INNER JOIN tb_userinfo u ON li.user_no = u.user_no
+		WHERE	li.lec_no	=	#{lec_no}
+      		<!-- <if test="(keywordStudent != null) and (!keywordStudent.equals(' '))">
+      			<choose>
+        			<when test= "(searchStudentKey eq 'all'.toString())">
+            			AND u.name LIKE concat('%', #{keywordStudent}, '%')
+             			OR li.apv LIKE concat('%', #{keywordStudent}, '%')
+        			</when>
+        			<when test= "(searchStudentKey eq 'name'.toString())">
+            			AND u.name LIKE concat('%', #{keywordStudent}, '%')
+        			</when>
+        			<when test= "(searchStudentKey eq 'apv'.toString())">
+            			AND li.apv LIKE concat('%', #{keywordStudent}, '%')
+        			</when>
+      			</choose>
+      		</if>  -->
+		<!-- ORDER BY lec_no DESC
+		LIMIT 	#{startpos}, #{pagesize} -->
+	</select>
+	
+	<select id="lectureStudentCnt" resultType="int">
+		SELECT COUNT(*)
+		FROM	tb_lecstd_info li
+			INNER JOIN tb_userinfo u ON li.user_no = u.user_no
+		WHERE	li.lec_no	=	#{lec_no}		
+	</select>
+	
+	<update id="updateApv">
+		UPDATE tb_lecstd_info
+		<set>
+			<if test="apv eq 'Y'.toString() ">
+				apv = 'N'
+			</if>
+			<if test="apv eq 'N'.toString() ">
+				apv = 'Y'
+			</if>
+		</set>
+		WHERE	lec_no = #{lec_no}
+		AND			user_no	=	#{user_no}
+	</update>
+
+ 
+</mapper>

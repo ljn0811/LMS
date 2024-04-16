@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.SurveyDao">
+	<!-- 강사목록 조회 -->
+	<select id="professorList" resultType="kr.happyjob.study.adm.model.ProfessorListVO">
+		select ui.user_no
+			,ui.loginID
+			,ui.name
+			,ui.user_phone
+			,ui.user_email
+			,left(ui.created_at,10) as created_at
+		from tb_userinfo ui
+		where ui.user_type = 'B'
+			<if test="(searchPfsName != null) and (!searchPfsName.equals(''))">
+			    and ui.name Like CONCAT('%', #{searchPfsName}, '%')
+			</if>	
+		ORDER BY ui.name
+		LIMIT #{startpos}, #{pagesize}			
+	</select>
+	
+	<!-- 강사별 강의목록 -->
+	<select id="pfsLectureList" resultType="kr.happyjob.study.adm.model.PfsLectureListVO">
+		select l.lec_no
+			,l.lec_nm
+			,ui.name
+			,l.lec_start
+			,l.lec_end
+			,ifnull(l.lec_max_cnt, 0) as max_cnt
+      		,ifnull(srl.cnt,0) as cnt
+		from tb_lecture l
+		     inner join tb_userinfo ui
+             ON ui.user_no = l.user_no
+         	left outer join (
+           		select sr.lec_no
+                      ,COUNT(*) as cnt
+		        from tb_srvy_result sr
+            	group by sr.lec_no
+         	) srl on srl.lec_no = l.lec_no        
+		where ui.user_no = #{user_no}
+	</select>
+		
+</mapper>

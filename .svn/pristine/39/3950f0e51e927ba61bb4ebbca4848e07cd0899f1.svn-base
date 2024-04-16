@@ -1,0 +1,207 @@
+package kr.happyjob.study.notice.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import kr.happyjob.study.common.comnUtils.ComnCodUtil;
+import kr.happyjob.study.notice.model.Noticevo;
+import kr.happyjob.study.notice.service.NoticeService;
+
+@Controller
+@RequestMapping("/notice/")
+public class NoticeController {
+	         
+	@Autowired
+	NoticeService noticeService;
+	
+	// Set logger
+	private final Logger logger = LogManager.getLogger(this.getClass());
+
+	// Get class name for logger
+	private final String className = this.getClass().toString();
+	
+	
+	
+	/**
+	 * 공지사항 초기화면
+	 */
+	@RequestMapping("notice.do")
+	public String notice( @RequestParam Map<String, Object> paramMap, Model model, HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
+		
+		logger.info("+ Start " + className + ".notice");
+		logger.info("   - paramMap : " + paramMap);
+		
+		logger.info("+ End " + className + ".notice");
+
+		return "notice/notice";
+	}
+	 
+	@RequestMapping("noticelist.do")
+	public String noticelist( @RequestParam Map<String, Object> paramMap, Model model, HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
+		
+		logger.info("+ Start " + className + ".noticelist");
+		logger.info("   - paramMap : " + paramMap);
+		
+		int cpage = Integer.valueOf((String)paramMap.get("cpage"));
+		int pagesize = Integer.valueOf((String)paramMap.get("pagesize"));
+		int startpos = (cpage - 1) * pagesize;
+		
+		paramMap.put("startpos", startpos);
+		paramMap.put("pagesize", pagesize);
+		
+		List<Noticevo> listdata = noticeService.noticelist(paramMap);
+		int listcnt = noticeService.noticecnt(paramMap);
+		
+		model.addAttribute("listdata",listdata);
+		model.addAttribute("listcnt",listcnt);
+		
+		logger.info("+ End " + className + ".noticelist");
+
+		return "notice/noticelist";
+	}	
+	
+	@RequestMapping("noticesave.do")
+	@ResponseBody
+	public Map<String, Object> noticesave( @RequestParam Map<String, Object> paramMap, Model model, HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
+		
+		logger.info("+ Start " + className + ".noticesave");
+		logger.info("   - paramMap : " + paramMap);
+		
+		Map<String, Object> returnmap = new HashMap<String, Object>();
+		
+		String action = (String) paramMap.get("action");
+		int userno = (int) session.getAttribute("user_no");
+		int sreturn = 0;
+		String result = "";
+		String resultmsg = "";
+		
+		
+		paramMap.put("userno", userno);		
+		
+		if("I".equals(action)) {						
+			sreturn = noticeService.noticesave(paramMap);
+		} else if("U".equals(action)) {
+			sreturn = noticeService.noticeupdate(paramMap);
+		} else if("D".equals(action)) {
+			sreturn = noticeService.noticedelete(paramMap);
+		}
+		
+		if(sreturn >= 0) {
+			result = "S";			
+			if("D".equals(action)) {
+				resultmsg = "삭제 되었습니다.";
+			} else {
+				resultmsg = "저장 되었습니다.";
+			}
+			
+		} else {
+			result = "F";			
+			if("D".equals(action)) {
+				resultmsg = "삭제 실패 했습니다.";
+			} else {
+				resultmsg = "저장에 실패 했습니다.";
+			}
+			
+		}
+		
+		returnmap.put("result",result);
+		returnmap.put("resultmsg",resultmsg);
+		
+		logger.info("+ End " + className + ".noticesave");
+
+		return returnmap;
+	}	
+	
+	@RequestMapping("noticedtl.do")
+	@ResponseBody
+	public Map<String, Object> noticedtl( @RequestParam Map<String, Object> paramMap, Model model, HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
+		
+		logger.info("+ Start " + className + ".noticedtl");
+		logger.info("   - paramMap : " + paramMap);
+		
+		Map<String, Object> returnmap = new HashMap<String, Object>();
+		
+		noticeService.noticeviewsupdate(paramMap);
+		
+		Noticevo selinfo = noticeService.noticedtl(paramMap);
+		returnmap.put("selinfo", selinfo);
+		
+		logger.info("+ End " + className + ".noticedtl");
+
+		return returnmap;
+	}	
+	
+	@RequestMapping("noticesavefile.do")
+	@ResponseBody
+	public Map<String, Object> noticesavefile( @RequestParam Map<String, Object> paramMap, Model model, HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
+		
+		logger.info("+ Start " + className + ".noticesavefile");
+		logger.info("   - paramMap : " + paramMap);
+		
+		Map<String, Object> returnmap = new HashMap<String, Object>();
+		
+		String action = (String) paramMap.get("action");
+		int userno = (int) session.getAttribute("user_no");
+		int sreturn = 0;
+		String result = "";
+		String resultmsg = "";
+		
+		
+		paramMap.put("userno", userno);		
+		
+		if("I".equals(action)) {						
+			sreturn = noticeService.noticeinsertfile(paramMap, request);
+		} else if("U".equals(action)) {
+			sreturn = noticeService.noticeupdatefile(paramMap, request);
+		} else if("D".equals(action)) {
+			sreturn = noticeService.noticedelete(paramMap);
+		}
+		
+		if(sreturn >= 0) {
+			result = "S";			
+			if("D".equals(action)) {
+				resultmsg = "삭제 되었습니다.";
+			} else {
+				resultmsg = "저장 되었습니다.";
+			}
+			
+		} else {
+			result = "F";			
+			if("D".equals(action)) {
+				resultmsg = "삭제 실패 했습니다.";
+			} else {
+				resultmsg = "저장에 실패 했습니다.";
+			}
+			
+		}
+		
+		returnmap.put("result",result);
+		returnmap.put("resultmsg",resultmsg);
+		
+		logger.info("+ End " + className + ".noticesavefile");
+
+		return returnmap;
+	}		
+
+}

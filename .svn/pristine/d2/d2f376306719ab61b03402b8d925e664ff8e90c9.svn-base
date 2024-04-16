@@ -1,0 +1,588 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>공지사항</title>
+<!-- sweet alert import -->
+<jsp:include page="/WEB-INF/view/common/common_include.jsp"></jsp:include>
+
+<!-- sweet swal import -->
+
+<style>
+
+	.center {
+    	display: flex;
+    	align-items: center;
+	}    
+  
+	#searchgrouptype,
+	#searchTitle,
+	#searchStartDate,
+	#searchEndDate,
+	#searchbtn {
+    	height: 35px; /* 원하는 높이로 설정하세요 */
+    	margin-right: 20px; /* 원하는 간격으로 조정하세요 */
+	}
+	
+	#searchbtn {
+        margin-left: auto; /* 오른쪽으로 정렬 */
+    }
+
+
+</style>
+
+<script type="text/javascript">
+   
+    var pagesize = 10;
+    var pageblocksize = 10;
+   
+	/** OnLoad event */ 
+	$(function() {
+		lecturePlanSearch();	
+		
+		fRegisterButtonClickEvent();
+		
+	});
+	
+
+	/** 버튼 이벤트 등록 */
+	function fRegisterButtonClickEvent() {
+		
+		$("#searchbtn").click(function(e) {
+			e.preventDefault();
+			
+			lecturePlanSearch();	
+			
+		});
+
+		$('a[name=btn]').click(function(e) {
+			e.preventDefault();
+
+			var btnId = $(this).attr('id');
+          
+			switch (btnId) {
+				case 'btnSave' :
+					Save();
+					break;
+				case 'btnDelete' :
+					Delete();
+					break;
+				case 'btnClose' :
+					gfCloseModal();
+					break;
+				case 'btnWeekDelete' :
+					week_delete();
+					break;
+				case 'btnWeekAdd' :
+					week_add();
+					break;
+				case 'btnWeekSave':
+					lecturePlanWeekPlanSave();
+					break;
+			}
+		}); 
+	}
+
+	function lecturePlanSearch(cpage) {
+	    
+	    cpage = cpage || 1;
+	    
+	    var searchType = $("#searchgrouptype").val();
+	    var searchValue = $("#searchTitle").val();
+	    var searchStartDate = $("#searchStartDate").val();
+	    var searchEndDate = $("#searchEndDate").val();
+	    
+	    // 각 검색 조건에 해당하는 변수 설정
+	    var searchUserName = null;
+	    var searchLectureName = null;
+
+	    // 검색 조건 설정
+	    switch (searchType) {
+	        case "searchUserName":
+	            searchUserName = searchValue;
+	            break;
+	        case "searchLectureName":
+	            searchLectureName = searchValue;
+	            break;
+	        // 추가 검색 조건이 있을 경우 여기에 추가
+	        default:
+	            break;
+	    }
+
+	    var param = {
+	        searchUserName: searchUserName,
+	        searchLectureName: searchLectureName,
+	        searchStartDate: searchStartDate,
+	        searchEndDate: searchEndDate,
+	        cpage: cpage,
+	        pagesize: pagesize,
+	    }
+		
+		var listcallback = function(respose) {
+			console.log(respose);		
+			$("#listLecturePlantbody").empty().append(respose);
+			
+			var paginationHtml = getPaginationHtml(cpage, $("#listCnt").val(), pagesize, pageblocksize, 'lecturePlanSearch');
+			console.log("paginationHtml : " + paginationHtml);
+	
+			$("#lecturePlanPagination").empty().append( paginationHtml );
+			
+			$("#cpage").val(cpage);
+		}
+		
+		callAjax("/tut/lecturePlanList.do", "post", "text" , false, param, listcallback);
+		
+	}
+	
+	/*강의계획서 등록*/
+	function lecturePlanSave() {
+		// gfCloseModal();\
+		init();
+		gfModalPop("#lecturePlanDetail");
+	}
+
+	function init(data) {
+							
+		if(data != null) {
+			$("#ilec_no").val(data.lec_no);
+			$("#iuser_name").val(data.name);
+			$("#ilec_nm").val(data.lec_nm);
+			$("#ilec_type").val(data.lec_type);
+			$("#iclassroom_no").val(data.classroom_no);
+			$("#iuser_email").val(data.user_email);			
+			$("#iuser_phone").val(data.user_phone);
+			$("#ilec_start").val(data.lec_start);
+			$("#ilec_end").val(data.lec_end);
+			$("#ilearn_goal").val(data.learn_goal);
+			$("#iattendance_notice").val(data.attendance_notice);
+			$("#ilearn_plan").val(data.learn_plan);
+			$("#btnDelete").show();
+			$("#action").val("U");	
+		} else {
+			$("#ilec_no").val("");
+			$("#iuser_name").val("");
+ 			$("#ilec_nm").val("");
+ 			$("#ilec_nm2").hide();
+			$("#ilec_type").val("");
+			$("#iclassroom_no").val("");
+			$("#iuser_email").val("");	
+			$("#iuser_phone").val(""); 
+			$("#ilec_start").val("");
+			$("#ilec_end").val("");
+			$("#ilearn_goal").val("");
+			$("#iattendance_notice").val("");
+			$("#ilearn_plan").val("");
+			$("#btnDelete").hide();
+			$("#action").val("I");	
+			
+			gfModalPop("#lecturePlanDetail");
+		}
+	}
+	
+	
+	function Save() {
+		
+		if(!fValidate()) {
+			return;
+		}
+		
+		var param = {
+			lec_no : $("#ilec_no").val(),
+			lec_nm : $("#ilec_nm").val(),
+			lec_type : $("#ilec_type").val(),
+			user_no : $("#iuser_no").val(),
+            lec_start : $("#ilec_start").val(),
+            lec_end : $("#ilec_end").val(),
+			/* classroom_no : $("#iclassroom_no").val(), */
+			learn_goal : $("#ilearn_goal").val(),
+			attendance_notice : $("#iattendance_notice").val(),
+			learn_plan : $("#ilearn_plan").val(),
+			action : $("#action").val(),
+		} 
+		
+		var saveCallback = function(response) {
+			console.log(JSON.stringify(response));
+			// {"result":"S","resultmsg":"저장 되었습니다."}
+			alert(response.resultmsg);
+			
+			if(response.result == "S") {
+				gfCloseModal();
+				if($("#action").val() == "I") {
+					lecturePlanSearch();
+				} else {
+					lecturePlanSearch($("#cpage").val());
+				}
+			}
+		}
+		
+		callAjax("/tut/lecturePlanSave.do", "post", "json" , false, param, saveCallback);
+	
+	}
+	
+	function fValidate() {
+
+		var chk = checkNotEmpty(
+				[	
+				 		[ "ilec_start" , "강의 시작일을 입력해 주세요."]
+				 	,	[ "ilec_end"   , "강의 종료일을 입력해 주세요."]	
+				 	,	[ "ilearn_goal", "수업목표를 입력해 주세요" ]
+					,	[ "iattendance_notice", "출결공지를 입력해 주세요" ]
+					,	[ "ilearn_plan", "강의계획을 입력해 주세요" ]
+				]
+		);
+
+		if (!chk) {
+			return;
+		}
+
+		return true;
+	}
+	
+	function modify(lec_no) {
+
+		var param = {
+			lec_no : lec_no
+		}
+			
+		console.log(lec_no);
+			
+		var detailCallback = function(response) {
+			console.log(JSON.stringify(response));
+					
+			init(response.selinfo);
+			gfModalPop("#lecturePlanDetail");
+		}
+		
+		callAjax("/tut/lecturePlanDetail.do", "post", "json" , false, param, detailCallback);
+		
+	}
+	
+	function Delete() {		
+		$("#action").val("D");		
+		Save();		
+	}
+
+	/* 주차 계획 추가  */
+	function week_add() {
+		var trCnt = $('#week_table tr').length;
+
+		var innerHtml = "";
+		innerHtml += '<tr>';
+		innerHtml += '    <td class="week">' + trCnt + "주차" + '</td>';
+		innerHtml += '    <td><input type="text" name="learn_plan" class="inputTxt p100 learn_plan"></td>';
+		innerHtml += '    <td><input type="text" name="learn_content" class="inputTxt p100 learn_content"></td>';
+		innerHtml += '</tr>';
+
+		$('#week_table > tbody:last').append(innerHtml);
+	}
+
+	//주간 계획 삭제
+	function week_delete() {
+		var trCnt = $('#week_table tr').length;
+
+		if ($("#action").val() != "I") {
+			var lec_id = $("#tmp_lec").val();
+			var week = $('#week_table > tbody:last > tr:last .week').text();
+
+			console.log("week:"
+					+ $('#week_table > tbody:last > tr:last .week').text());
+
+			$.ajax({
+				url : "week_plan_del.do",
+				type : "post",
+				data : {
+					lec_id : lec_id,
+					week : week
+				},
+				success : function(result) {
+					alert(result.resultMsg);
+				}
+
+			});
+			$('#week_table > tbody:last > tr:last').remove();
+		} else {
+			$('#week_table > tbody:last > tr:last').remove();
+		}
+	}
+	
+	//주간 계획 추가
+	function lecturePlanWeekPlanSave() {
+	    if (!fValidate()) {
+	        return;
+	    }
+
+	    var lec_no = $("#tmp_lec").val();
+	    var week = [];
+	    var learn_plan = [];
+	    var learn_content = [];
+
+	    $(".week").each(function() {
+	        week.push($(this).text());
+	    });
+
+	    $(".learn_plan").each(function() {
+	        learn_plan.push($(this).val());
+	    });
+
+	    $(".learn_content").each(function() {
+	        learn_content.push($(this).val());
+	    });
+
+	    var param = {
+	        lec_no: lec_no,
+	        week : week,
+	        learn_plan: learn_plan,
+	        learn_content: learn_content
+	    };
+
+	    var saveCallback = function(response) {
+	        console.log(JSON.stringify(response));
+	        alert(response.resultmsg);
+
+	        if (response.result == "S") {
+	            gfCloseModal();
+	            if ($("#action").val() == "I") {
+	                lecturePlanSearch();
+	            } else {
+	                lecturePlanSearch($("#cpage").val());
+	            }
+	        }
+	    };
+
+	    callAjax("/tut/lecturePlanWeekPlanSave.do", "post", "json", false, param, saveCallback);
+	}
+	
+	
+</script>
+
+</head>
+<body>
+
+<form id="myForm" action=""  method="">
+    <input type="hidden"  id="action"  name="action"  value="" />
+    <input type="hidden"  id="ilec_no"  name="ilec_no"  value="" />
+    <input type="hidden" id="tmp_lec"  name="lec_id"  value="">
+    <input type="hidden"  id="iuser_no"  name="iuser_no"  value="${lecUserInfo.user_no}" />
+    <input type="hidden"  id="cpage"  name="cpage"  value="" />
+
+
+	<!-- 모달 배경 -->
+	<div id="mask"></div>
+
+	<div id="wrap_area">
+
+		<h2 class="hidden">header 영역</h2>
+		<jsp:include page="/WEB-INF/view/common/header.jsp"></jsp:include>
+
+		<h2 class="hidden">컨텐츠 영역</h2>
+		<div id="container">
+			<ul>
+				<li class="lnb">
+					<!-- lnb 영역 --> <jsp:include
+						page="/WEB-INF/view/common/lnbMenu.jsp"></jsp:include> <!--// lnb 영역 -->
+				</li>
+				<li class="contents">
+					<!-- contents -->
+					<h3 class="hidden">contents 영역</h3> <!-- content -->
+					<div class="content">
+
+						<p class="Location">
+							<a href="../dashboard/dashboard.do" class="btn_set home">메인으로</a>
+							 <span class="btn_nav bold">학습지원</span> <span class="btn_nav bold">강의계획서 관리</span> 
+							<a href="../tut/lecturePlan.do" class="btn_set refresh">새로고침</a>
+						</p>
+						
+						<p class="conTitle">
+							<span>강의계획서 관리</span> 
+						</p>
+						
+						<div class="center">
+							<select id="searchgrouptype" name="searchgrouptype" style="width: 100px;">
+								<option value="searchLectureName">과목명</option>
+								<option value="searchUserName">강사명</option>
+							</select>
+ 						
+ 							<input type="text" id="searchTitle" name="searchTitle" style="width: 400px;" 
+ 								onkeydown="if (event.keyCode === 13) document.getElementById('searchbtn').click()">
+								작성일 &nbsp;&nbsp;&nbsp;
+    						<input type="date" id="searchStartDate" name="searchStartDate" />
+    						<input type="date" id="searchEndDate" name="searchEndDate" />
+   								<a class="btnType red" href="" name="searchbtn" id="searchbtn">
+									<span>검색</span>
+								</a>
+						</div>
+					
+					<br> <!-- 공백 추가 -->
+					
+<!-- 					<div style="text-align: right;">
+   						<a class="btnType blue" href="javascript:void(0);" onclick="modify()">
+        					<span>강의계획서 등록</span>
+   						</a>
+					</div> -->
+					
+					<br> <!-- 공백 추가 -->
+					
+					<br> <!-- 공백 추가 -->
+					
+						<div class="lecturePlanList">
+							<table class="col" >
+								<caption>caption</caption>
+								<colgroup>
+									<col width="7%">
+									<col width="20%">
+									<col width="10%">
+									<col width="15%">
+									<col width="15%">
+									<col width="8%">
+									<col width="5%">
+								</colgroup>
+	
+								<thead>
+									<tr>
+										<th scope="col">분류</th>
+										<th scope="col">과목</th>
+										<th scope="col">강사명</th>
+										<th scope="col">강의시작일</th>
+										<th scope="col">강의종료일</th>
+										<th scope="col">신청인원</th>
+										<th scope="col">정원</th>
+									</tr>
+								</thead>
+								<tbody id="listLecturePlantbody"></tbody>
+							</table>
+						</div>
+	
+						<div class="paging_area"  id="lecturePlanPagination"> </div>
+	
+					</div> <!--// content -->
+
+					<h3 class="hidden">풋터 영역</h3>
+						<jsp:include page="/WEB-INF/view/common/footer.jsp"></jsp:include>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- 강의계획서 등록 -->
+	<div id="lecturePlanDetail" class="layerPop layerType2" style="width: 800px;">
+		<dl>
+			<dt>
+				<strong>강의계획서 관리</strong>
+			</dt>
+			<dd class="content">
+				<!-- s : 여기에 내용입력 -->
+			<table class="row">
+    			<caption>caption</caption>
+    			<colgroup>
+					<col width="120px">
+					<col width="*">
+					<col width="120px">
+					<col width="*">
+				</colgroup>
+
+			<tbody>
+				<tr>
+					<th>과목</th>
+					<td>
+						<select value="list"  id="ilec_nm" >
+							<option style = "width: 100px;">자바</option>
+							<option style = "width: 100px;">자바스크립트</option>
+							<option style = "width: 100px;">React</option>
+							<option style = "width: 100px;">뷰</option>	
+						</select>
+					</td>
+					<th>분류</th>
+					<td>
+						<select value="list"  id="ilec_type" >
+							<option style = "width: 100px;">실업자교육</option>
+							<option style = "width: 100px;">직장인교육</option>	
+						</select>
+					</td>
+				</tr>
+				<tr style="padding-bottom: 200px;">
+            		<th scope="row" >강사명</th>
+            		<td>
+            			<input type="text" class="inputTxt p100" name="iuser_name" id="iuser_name" />
+					</td>
+            			<th scope="row" >강의실</th>
+					<td>
+						<!-- 등록 -->
+						<select id="iclassroom_no" name="iclassroom_no">	
+							<c:forEach items="${listData}" var="list">
+									<option value="${list.classroom_no}">${list.classroom_no}</option>
+							</c:forEach>
+						</select>
+					</td>		
+				</tr>	
+        		<tr>
+					<th scope="row">이메일</th>
+            		<td>
+                		<input type="text" style="font-size: 14px;" class="inputTxt p100"  name="iuser_email" id="iuser_email" />  
+            		</td>	
+	                    <th scope="row">연락처</th>
+					<td>
+						<input type="text" class="inputTxt p100" name="iuser_phone" id="iuser_phone" />
+					</td>							
+				</tr>
+				<tr>
+    				<th scope="row">강의시작일</th>
+    				<td><input type="date" class="inputTxt p100" style="font-size: 14px;" name="ilec_start" id="ilec_start"></td>
+    				<th scope="row">강의종료일</th>
+    				<td><input type="date" class="inputTxt p100" style="font-size: 14px;" name="ilec_end" id="ilec_end"></td>
+				</tr>	
+				<tr>
+					<th scope="row">수업목표</th>
+ 					<td colspan="3"><textarea  name="ilearn_goal" id="ilearn_goal"  cols="40" rows="5"> </textarea>							
+        		</tr>	
+        		<tr>
+					<th scope="row">출결공지</th>
+					<td colspan="3"><textarea  name="iattendance_notice" id="iattendance_notice"  cols="40" rows="5"> </textarea>							
+				</tr>		
+			</tbody>
+		</table>
+				<div class="btn_areaC mt30">
+					<a href="" class="btnType blue" id="btnSave" name="btn"><span>저장</span></a> 
+					<a href="" class="btnType blue" id="btnDelete" name="btn"><span>삭제</span></a> 
+					<a href="" class="btnType gray" id="btnClose" name="btn"><span>취소</span></a>
+				</div>
+			
+
+	<dl>
+		<dd class="content">
+			<a href="" class="btnType blue" id="btnWeekAdd" name="btn">
+				<span>주차 추가</span>
+			</a>
+			<a href="" class="btnType red" id="btnWeekDelete" name="btn">
+				<span>주차 삭제</span>
+			</a>
+			<table id="week_table" class="col2 mb10">
+						<thead>
+							<tr>
+								<th scope="col">주차수</th>
+								<th scope="col">학습목표</th>
+								<th scope="col">학습내용</th>
+							</tr>
+						</thead>
+						<tbody id="week_plan">
+						</tbody>
+					</table>		
+					<div class="btn_areaC mt30">
+						<a href="" class="btnType blue" id="btnWeekSave" name="btn"><span>저장</span></a>
+						<a href="" class="btnType gray" id="btnClose" name="btn"><span>닫기</span></a>
+					</div>
+				</dd>
+			</dl>
+				<!-- e : 여기에 내용입력 -->
+			</dd>
+		</dl>
+		<a href="" class="closePop"><span class="hidden">닫기</span></a>
+	</div>
+
+</form>
+</body>
+</html>

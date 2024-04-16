@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.LecturePlanDao">
+
+   <!-- 강의 목록 조회 -->
+   <select id="lecturePlanList" resultType="kr.happyjob.study.tut.model.LecturePlanVO">
+      /*kr.happyjob.study.tut.dao.LecturePlanDao.lecturePlanList*/      
+      select  l.lec_no
+		 	 ,l.test_no
+			 ,l.classroom_no
+			 ,l.user_no
+			 ,l.lec_nm
+			 ,l.lec_max_cnt
+			 ,l.lec_cnt
+			 ,l.lec_etc
+			 ,DATE_FORMAT(lec_start , '%Y-%m-%d') as lec_start
+			 ,l.lec_end
+			 ,l.lec_content
+			 ,l.learn_goal
+			 ,l.learn_plan
+			 ,ui.name
+         from tb_lecture l
+         	inner join tb_userinfo ui on ui.user_no = l.user_no
+ 			<where>
+				<if test="(searchUserName!= null) and (!searchUserName.equals(''))">
+ 			       and l.user_no Like CONCAT('%', #{searchUserName}, '%')
+ 			   </if>
+ 			   <if test="(searchLectureName != null) and (!searchLectureName.equals(''))">
+ 			       and l.lec_nm Like CONCAT('%', #{searchLectureName}, '%')
+ 			   </if>
+ 
+ 			   <if test="(searchStartDate != null) and (!searchStartDate.equals(''))">
+ 			       and l.lec_start <![CDATA[>=]]> STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')    
+ 			   </if>
+  			   <if test="(searchEndDate != null) and (!searchEndDate.equals(''))">
+ 			       and l.lec_end <![CDATA[<=]]> STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')    
+ 			   </if>	 
+ 			</where>
+		ORDER BY lec_start DESC
+		LIMIT #{startpos}, #{pagesize}
+   </select>
+   
+   	<!-- 총 갯수 조회 -->
+	<select id="lecturePlanCnt" resultType="int">
+		/*kr.happyjob.study.tut.dao.LecturePlanDao.lecturePlanCnt*/
+		select count(*)
+		from tb_lecture l
+         	inner join tb_userinfo ui on ui.user_no = l.user_no
+				<if test="(searchUserName!= null) and (!searchUserName.equals(''))">
+ 			       and l.user_no Like CONCAT('%', #{searchUserName}, '%')
+				</if>
+				<if test="(searchLectureName != null) and (!searchLectureName.equals(''))">
+ 			       and l.lec_nm Like CONCAT('%', #{searchLectureName}, '%')
+				</if>
+				<if test="(searchStartDate != null) and (!searchStartDate.equals(''))">
+ 			       and l.lec_start <![CDATA[>=]]> STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')    
+ 				</if>
+				<if test="(searchEndDate != null) and (!searchEndDate.equals(''))">
+ 			       and l.lec_end <![CDATA[<=]]> STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')    
+				</if>	
+		</select>   
+		
+	<select id="lecturePlanDetail" resultType="kr.happyjob.study.tut.model.LecturePlanVO">
+	   /*kr.happyjob.study.tut.dao.lecturePlanDao.lecturePlanDetail*/
+        select   l.lec_no
+                ,l.user_no 
+                ,l.classroom_no
+                ,ui.user_phone
+                ,ui.user_email
+              	,l.learn_goal
+			 	,l.learn_plan
+		from tb_lecture l
+         	inner join tb_userinfo ui on ui.user_no = l.user_no
+	   where l.lec_no = #{lec_no}
+	</select>
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.LecListDao">
+
+	<!-- 목록 조회 -->
+	<select id="lecList" resultType="kr.happyjob.study.std.model.LecListVO">
+		/*kr.happyjob.study.std.dao.lecList*/
+		select 	l.lec_no
+                ,l.user_no       
+                ,l.classroom_no
+                ,l.test_no
+                ,l.attendance_notice     
+                ,l.learn_plan
+                ,l.learn_goal
+                ,l.lec_content
+                ,l.lec_start
+                ,l.lec_end
+                ,l.lec_etc
+                ,l.lec_cnt
+                ,l.lec_max_cnt
+                ,l.lec_nm
+                ,ui.name as user_nm
+                ,cm.classroom_nm as classroom_nm
+         from tb_lecture l
+		 inner join tb_userinfo ui
+		 on ui.user_no = l.user_no
+		 inner join tb_classroom_mgt cm
+		 on l.classroom_no = cm.classroom_no
+	</select>
+	
+	<!-- 단건 목록 조회 -->
+	<select id="lecListDtl" resultType="kr.happyjob.study.std.model.LecListVO">
+		/*kr.happyjob.study.std.dao.lecList*/
+		select 	lec_no
+                ,user_no       
+                ,classroom_no
+                ,test_no
+                ,attendance_notice     
+                ,learn_plan
+                ,learn_goal
+                ,lec_content
+                ,lec_start
+                ,lec_end
+                ,lec_etc
+                ,lec_cnt
+                ,lec_max_cnt
+                ,lec_nm
+         from tb_lecture
+		 where lec_no = #{lec_no}
+	</select>
+	
+	<!-- 리스트 개수 조회 -->
+	<select id="lecListCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.LecListDao.lecListCnt*/
+		select count(*) as total_cnt
+         from tb_lecture l
+		 inner join tb_userinfo ui
+		 on ui.user_no = l.user_no
+		 inner join tb_classroom_mgt cm
+		 on l.classroom_no = cm.classroom_no
+		 LIMIT #{startPos}, #{pageSize}
+	</select>
+	
+	<!-- 설문 질문 확인 -->
+	<select id="selectOneSurveyQuestion" resultType="kr.happyjob.study.std.model.SurveyQueVO">
+		select 
+			lec_no
+			,que
+			,que_no
+			,que_one
+			,que_two
+			,que_three
+			,que_four
+			,que_five
+			,lec_review
+		from tb_srvy_que
+		where lec_no = #{lec_no}
+	</select>
+	
+	<!-- 설문 답변 확인 -->
+	<select id="selectOneSurveyAnswer" resultType="kr.happyjob.study.std.model.SurveyQueVO">
+		select 
+			lec_no
+			,que_no
+			,user_no
+			,select_num
+			,review_result
+		from tb_srvy_result
+		where lec_no = #{lec_no}
+	</select>
+	
+	<!-- 강의 리뷰 제출 -->
+	<insert id="surveyAnswerInsert">
+		insert into tb_srvy_result
+		(
+			lec_no
+			,que_no
+			,user_no
+			,select_num
+			,review_result
+		)
+		values
+		(
+			#{lec_no}
+			,#{que_no}
+			,#{user_no}
+			,#{select_num}
+			,#{review_result}
+		)
+	</insert>
+	
+		
+</mapper>

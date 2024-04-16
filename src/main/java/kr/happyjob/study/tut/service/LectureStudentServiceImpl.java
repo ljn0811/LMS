@@ -1,0 +1,64 @@
+package kr.happyjob.study.tut.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import kr.happyjob.study.tut.dao.LectureStudentDao;
+import kr.happyjob.study.tut.model.LectureStudentVO;
+
+@Service
+public class LectureStudentServiceImpl implements LectureStudentService {
+	
+	@Autowired
+	LectureStudentDao lectureStudentDao;
+
+   // Set logger
+   private final Logger logger = LogManager.getLogger(this.getClass());
+   
+   // Get class name for logger
+   private final String className = this.getClass().toString();
+
+   @Override
+   public List<LectureStudentVO> lectureList(Map<String, Object> paramMap) throws Exception {
+	// TODO Auto-generated method stub
+	   List<LectureStudentVO> lectureList = lectureStudentDao.lectureList(paramMap);
+	
+	   return lectureList;
+   }
+
+   @Override
+   public int lectureCnt(Map<String, Object> paramMap) throws Exception {
+	   // TODO Auto-generated method stub
+	   int lectureCnt = lectureStudentDao.lectureCnt(paramMap);
+	   
+	   return lectureCnt;
+   }
+
+   @Override
+   public List<LectureStudentVO> lectureStudentList(Map<String, Object> paramMap) throws Exception {
+	   // TODO Auto-generated method stub
+	   List<LectureStudentVO> lectureStudentList = lectureStudentDao.lectureStudentList(paramMap);
+	   
+	   return lectureStudentList;
+   }
+
+   @Override
+   public int lectureStudentCnt(Map<String, Object> paramMap) throws Exception {
+	   // TODO Auto-generated method stub
+	   int lectureStudentCnt = lectureStudentDao.lectureStudentCnt(paramMap);
+	   
+	   return lectureStudentCnt;
+   }
+
+@Override
+public int updateApv(Map<String, Object> paramMap) throws Exception {
+	// TODO Auto-generated method stub
+	return lectureStudentDao.updateApv(paramMap);
+}  	
+   	
+}

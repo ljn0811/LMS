@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.ReportControlDao">
+
+	<!-- 강의목록 -->
+	<select id="showLectureList" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+		/*kr.happyjob.study.tut.dao.ReportControlDao.showLectureList*/
+				SELECT
+							lec.lec_no,
+							lec.lec_nm,
+							lec.user_no,
+							lec.lec_start,
+							lec.lec_end,
+							lec.classroom_no,
+							lec.lec_cnt,
+							lec.lec_max_cnt
+				FROM		tb_lecture lec
+ 							inner join tb_userinfo ui on ui.user_no = lec.user_no
+ 				WHERE 	lec.user_no = #{user_no}
+		LIMIT #{startpos}, #{pagesize};
+
+	</select>
+	
+<!-- 강의 totalLecccnt 구하기 -->
+	<select id="lecListcnt" resultType="int">
+/*kr.happyjob.study.tut.dao.ReportControlDao.lecListcnt*/
+	SELECT
+    COUNT(*) AS total_cnt
+FROM tb_lecture lec
+ inner join tb_userinfo ui on ui.user_no = lec.user_no
+		WHERE ui.user_no = #{user_no}
+               	
+	</select>
+
+	<!-- 과제목록 -->
+	<select id="showProjectInfo" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+		/*kr.happyjob.study.tut.dao.ReportControlDao.showProjectInfo*/
+		SELECT
+   								 tlt.task_id,
+    							 tlt.lec_no,
+   								 tlt.task_name,
+   								 DATE_FORMAT(tlt.task_start, '%Y.%m.%d') AS task_start,
+   								 DATE_FORMAT(tlt.task_end, '%Y.%m.%d') AS task_end
+		FROM
+   								 tb_lec_task tlt
+					JOIN
+    						     tb_lecture tl ON tlt.lec_no = tl.lec_no
+					JOIN
+    						     tb_userinfo tu ON tl.user_no = tu.user_no
+					WHERE
+    							 tu.user_no = #{user_no}
+    							 LIMIT #{startpos}, #{pagesize}
+		
+
+	</select>
+	<!-- 과제 totalLecccnt2 구하기 -->
+	<select id="reportLisCnt" resultType="int">
+/*kr.happyjob.study.tut.dao.ReportControlDao.reportLisCnt*/
+		SELECT
+	    					COUNT(*) AS total_cnt
+		FROM 			tb_lec_task tlt
+					JOIN
+    						     tb_lecture tl ON tlt.lec_no = tl.lec_no
+					JOIN
+    						     tb_userinfo tu ON tl.user_no = tu.user_no
+					WHERE
+    							 tu.user_no =  #{user_no}
+               	
+	</select>
+<!--  강의 상세정보 -->
+	<select id="showLectureInfo" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+	/*kr.happyjob.study.tut.dao.ReportControlDao.showLectureInfo*/
+		SELECT lec_nm
+		, user_no
+		,
+		DATE_FORMAT( lec_start, '%Y.%m.%d') AS lec_start
+		, DATE_FORMAT(
+		lec_end,'%Y.%m.%d') AS lec_end
+		, classroom_nm
+		, lec_max_cnt
+		, lec_cnt
+		,lec_no
+		FROM tb_lecture
+		LEFT JOIN tb_classroom_mgt
+		ON
+		tb_lecture.classroom_nm = tb_classroom_mgt.classroom_nm
+	</select>
+
+		<!-- 과제 등록 -->
+	<insert id="makeProject">
+		/*kr.happyjob.study.tut.dao.ReportControlDao.makeProject*/
+		<selectKey resultType="int" keyProperty="task_id" order="BEFORE">
+			select ifnull(max(task_id),0) + 1 from tb_lec_task
+		</selectKey>
+		INSERT INTO tb_lec_task
+						(task_id,
+						lec_no,
+						task_name,
+						task_content,
+						task_start,
+						task_end,
+						task_filename,
+						task_path,
+						task_relative_path,
+						task_filesize,
+						file_ext)
+		VALUES(
+						#{task_id},
+						#{lec_no},
+						#{task_name},
+						#{task_content},
+						#{task_start},
+						#{task_end},
+						#{task_filename},
+						#{task_path},
+						#{task_relative_path},
+						#{task_filesize},
+						#{file_ext})
+	</insert>
+
+
+<!--  과제 등록한 상세정보 -->
+	<select id="showProjectInfo2" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+		/*kr.happyjob.study.tut.dao.ReportControlDao.showProjectInfo2*/
+		SELECT
+		task_name, 
+		task_content, 
+		DATE_FORMAT(task_start, '%Y.%m.%d') AS task_start,
+		DATE_FORMAT(task_end, '%Y.%m.%d') AS task_end,
+		task_filename,
+		task_path, 
+		task_filesize, 
+		task_relative_path,
+		file_ext,
+		task_id,
+		lec_no
+		FROM tb_lec_task
+		WHERE task_id=#{task_id}
+	</select>
+
+
+<!--  등록한 과제 수정하기 -->
+	<update id="updateProject">
+	/*kr.happyjob.study.tut.dao.ReportControlDao.updateProject*/
+	
+		UPDATE tb_lec_task
+		SET task_name = #{task_name}
+		,task_content=#{task_content}
+		, task_start=#{task_start}
+		, task_end=#{task_end}
+		, task_filename=#{task_filename}
+		, task_path=#{task_path}
+		, task_filesize=#{task_filesize}
+		WHERE task_id = #{task_id}
+	</update>
+	
+<!-- 과제정보 -->
+	<select id="showSubmitInfo" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+	/*kr.happyjob.study.tut.dao.ReportControlDao.showSubmitInfo*/
+		SELECT UI.name,
+		RM.user_no,
+		RM.task_id
+		FROM tb_report_management RM
+		INNER JOIN
+		tb_userinfo UI ON RM.user_no = UI.user_no
+		WHERE task_id = #{task_id}
+	</select>
+
+<!--   과제 제출한 학생 상세정보  -->
+	<select id="showStudentCon" resultType="kr.happyjob.study.tut.model.ReportControlVO">
+	/*kr.happyjob.study.tut.dao.ReportControlDao.showStudentCon*/
+		SELECT
+		sub_content,
+		sub_filename,
+		sub_path,
+		sub_relative_path,
+		sub_filesize ,
+		file_ext,
+		DATE_FORMAT(sub_date, '%Y.%m.%d') AS sub_date,
+		user_no,
+		task_id,
+		lec_no
+		FROM tb_report_management
+		WHERE user_no=#{user_no} AND task_id=#{task_id}
+	</select>
+
+	   <!-- 강의실  목록 조회 -->
+   <select id="selectclasslist" resultType="kr.happyjob.study.system.model.comcombo">  
+          select  classroom_no as cd
+                  , classroom_nm as name
+            from tb_classroom_mgt
+           order by classroom_no 
+   </select>
+
+
+</mapper>

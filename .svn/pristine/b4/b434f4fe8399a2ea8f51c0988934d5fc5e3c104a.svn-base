@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.notice.dao.NoticeDao">
+
+	<!-- 목록 조회 -->
+	<select id="noticelist" resultType="kr.happyjob.study.notice.model.Noticevo">
+		/*kr.happyjob.study.notice.dao.NoticeDao.noticelist*/
+		select n.notice_no
+                ,n.user_no       
+                ,n.notice_title
+                ,n.notice_content
+                ,DATE_FORMAT(n.created_at , '%Y-%m-%d') as created_at     
+                ,n.notice_views
+                ,ui.name 
+         from tb_notice n
+                inner join tb_userinfo ui on ui.user_no = n.user_no 
+         WHERE ui.user_type = #{usertype}
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+			    and n.notice_title Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+			<if test="(searchstdate != null) and (!searchstdate.equals(''))">
+			    and n.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+			</if>
+			 <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+			    and n.created_at <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+			</if>	 
+		ORDER BY n.notice_no DESC
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 총 갯수 조회 -->
+	<select id="noticecnt" resultType="int">
+		/*kr.happyjob.study.notice.dao.NoticeDao.noticecnt*/
+		select count(*)
+         from tb_notice n
+                inner join tb_userinfo ui on ui.user_no = n.user_no
+		WHERE ui.user_type = #{usertype}	
+		   <if test="(searchtitle != null) and (!searchtitle.equals(''))">
+		       and n.notice_title Like CONCAT('%', #{searchtitle}, '%')
+		   </if>
+		   <if test="(searchstdate != null) and (!searchstdate.equals(''))">
+		       and n.created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+		   </if>
+			   <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+		       and n.created_at <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+		   </if>	 
+ 			
+	</select>
+	
+	
+	<insert id="noticesave">
+	    /*kr.happyjob.study.notice.dao.NoticeDao.noticesave*/
+	    <selectKey resultType="int" keyProperty="noticeno" order="BEFORE">
+            select ifnull(max(notice_no),0) + 1 from tb_notice
+        </selectKey> 
+	    insert into tb_notice
+	                  (   notice_no
+	                     ,user_no
+	                     ,notice_title
+	                     ,notice_content
+	                     ,created_at
+	                     ,notice_views
+	                 ) values (
+	                     #{noticeno} 
+	                    ,#{userno} 
+	                    ,#{ititle}
+	                    ,#{icontent}
+	                    ,now()
+	                    ,0
+	                 )
+	</insert>
+	
+	<update id="noticeupdate">
+	      update tb_notice
+	           set notice_title = #{ititle}
+	               ,notice_content = #{icontent}
+	       where notice_no = #{notice_no}
+	</update>
+
+	<update id="noticeviewsupdate">
+	      update tb_notice
+	           set notice_views = notice_views + 1
+	       where notice_no = #{notice_no}
+	</update>	
+	
+	<select id="noticedtl" resultType="kr.happyjob.study.notice.model.Noticevo">
+	   /*kr.happyjob.study.notice.dao.NoticeDao.noticedtl*/
+        select n.notice_no
+                ,n.user_no       
+                ,n.notice_title
+                ,n.notice_content
+                ,DATE_FORMAT(n.created_at , '%Y-%m-%d') as created_at     
+                ,n.notice_views
+                ,ui.name 
+                ,filename
+	            ,phsycalpath
+	            ,logicalpath
+	            ,filesize
+	            ,fileext
+         from tb_notice n
+                inner join tb_userinfo ui on ui.user_no = n.user_no	
+	   where n.notice_no = #{notice_no}
+	</select>
+	
+	<delete id="noticedelete">
+	      delete from tb_notice
+	       where notice_no = #{notice_no}
+	</delete>
+	
+	<insert id="noticeinsertfile">
+	    <selectKey resultType="int" keyProperty="noticeno" order="BEFORE">
+            select ifnull(max(notice_no),0) + 1 from tb_notice
+        </selectKey> 
+	    insert into tb_notice
+	                  (   notice_no
+	                     ,user_no
+	                     ,notice_title
+	                     ,notice_content
+	                     ,created_at
+	                     ,notice_views
+	                     <if test="fileyn eq 'Y'.toString()">
+	                     ,filename
+	                     ,phsycalpath
+	                     ,logicalpath
+	                     ,filesize
+	                     ,fileext
+	                     </if>
+	                 ) values (
+	                     #{noticeno} 
+	                    ,#{userno} 
+	                    ,#{fititle}
+	                    ,#{ficontent}
+	                    ,now()
+	                    ,0
+	                    <if test="fileyn eq 'Y'.toString()">
+	                    ,#{fileinfo.file_nm} 
+	                    ,#{fileinfo.file_loc} 
+	                    ,#{fileinfo.vrfile_loc} 
+	                    ,#{fileinfo.file_size} 
+	                    ,#{fileinfo.fileExtension} 
+	                    </if>
+	                 )
+	
+	</insert>
+	
+	<update id="noticeupdatefile">
+	      update tb_notice
+	           set notice_title = #{fititle}
+	               ,notice_content = #{ficontent}
+	               <if test="fileyn eq 'Y'.toString()">
+	               ,filename = #{fileinfo.file_nm} 
+	               ,phsycalpath = #{fileinfo.file_loc} 
+	               ,logicalpath = #{fileinfo.vrfile_loc} 
+	               ,filesize = #{fileinfo.file_size} 
+	               ,fileext = #{fileinfo.fileExtension} 
+	               </if>
+	       where notice_no = #{notice_no}
+	
+	
+	
+	</update>
+		
+</mapper>

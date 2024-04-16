@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adm.dao.TestPubDao">
+
+	<!-- 그룹코드 목록 조회 -->
+	<select id="listTestPub" resultType="kr.happyjob.study.adm.model.TestPubModel">
+		/*kr.happy.study.adm.dao.TestPubDao.listTestPub*/
+		SELECT
+		lec_no,
+		lec_nm,
+		CONCAT(lec_start, ' ~ ', lec_end) AS lecture_period
+		FROM tb_lecture
+		<where>
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+				and lec_nm Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+		</where>
+		
+		ORDER BY lec_nm DESC
+		LIMIT #{startpos}, #{pagesize}
+
+
+	</select>
+
+	<!-- 그룹코드 목록 총 갯수 조회 -->
+	<select id="countListTestPub" resultType="int">
+		/*kr.happy.study.system.dao.TestPubDao.countListTestPub*/
+		SELECT
+		COUNT(1) AS tot_cnt FROM tb_lecture
+		<where>
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+				and lec_nm Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+		</where>
+	</select>
+
+<!-- 그룹코드 목록 조회 -->
+	<select id="testListPub" resultType="kr.happyjob.study.adm.model.TestListPubModel">
+		/*kr.happy.study.adm.dao.TestPubDao.testListPub*/
+			SELECT
+			 t.test_no
+ 			,l.lec_nm
+			,t.test_nm
+			,t.test_type
+			,l.lec_cnt
+      		,t.lec_no
+		FROM tb_test t
+		INNER JOIN tb_lecture l
+		ON l.lec_no = t.lec_no
+		WHERE t.lec_no=#{lec_no}
+		
+	</select>
+	
+	<!-- 그룹코드 목록 총 갯수 조회 -->
+	<select id="countTestListPub" resultType="int">
+		/*kr.happy.study.system.dao.TestPubDao.countTestListPub*/
+		SELECT
+			COUNT(1) AS tot_cnt 
+		FROM tb_test
+		INNER JOIN tb_lecture 
+		on tb_lecture.lec_no = tb_test.lec_no
+		
+	</select>
+	
+	<!-- 시험 목록 디테일 -->
+	<select id="testListPubDtl" resultType="kr.happyjob.study.adm.model.TestListPubModel">
+	   /*kr.happyjob.study.adm.dao.TestPubDao.testListPubDtl*/
+       SELECT
+       		l.lec_no
+ 			,t.test_no
+			,t.test_nm		
+			,t.test_type	
+  			,DATE_FORMAT(t.test_start , '%Y-%m-%d') as test_start
+  			,DATE_FORMAT(t.test_end , '%Y-%m-%d') as test_end 
+  		FROM tb_test t
+  		INNER JOIN tb_lecture l
+		ON l.lec_no = t.lec_no
+  		WHERE t.test_no=#{test_no}
+	</select>
+	<!-- 시험 목록 등록 -->
+	<insert id="testListPubSave">
+	    /*kr.happyjob.study.adm.dao.TestPubDao.testListPubSave*/
+	    <selectKey resultType="int" keyProperty="testNo" order="BEFORE">
+            select ifnull(max(test_no),0) + 1 from tb_test
+        </selectKey> 
+	    insert into tb_test
+	                  (   test_no
+	                     ,test_nm
+	                     ,test_type
+	                     ,test_start
+	                     ,test_end
+	             		,lec_no
+	             		,test_etc
+	             	
+	                 ) values (
+	                     #{testNo} 
+	                    ,#{ititle}
+	                    ,#{itype}
+	                    ,#{istart}
+	                    ,#{iend}
+	                    ,#{lec_no}
+	                    ,'examBe'
+	                 )
+	</insert>
+	
+	<update id="testListPubUpdate">
+	      update tb_test
+	           set test_nm = #{ititle}
+	               ,test_type = #{itype}
+	               ,test_start =#{istart}
+	               ,test_end =#{iend}
+	       where test_no = #{test_no}
+	</update>
+	
+	<delete id="testListPUbDelete">
+	      delete from tb_test
+	       where test_no = #{test_no}
+	</delete>
+	
+	<!-- 시험 문제 등록 -->
+	<insert id="testQueSave">
+	    /*kr.happyjob.study.adm.dao.TestPubDao.testQueSave*/
+	    <selectKey resultType="int" keyProperty="testQueNo" order="BEFORE">
+            select ifnull(max(test_que_no),0) + 1 from tb_test_que
+        </selectKey> 
+	    insert into tb_test_que
+	                  (   test_que_no
+	                     ,test_no
+	                     ,test_que
+	                     ,que_ans
+	                     ,que_ex1
+	             		 ,que_ex2
+	             		 ,que_ex3
+	             		 ,que_ex4
+	                 ) values (
+	                     #{testQueNo} 
+	                    ,#{test_no}
+	                    ,#{test_que}
+	                    ,#{que_ans}
+	                    ,#{que_ex1}
+	                    ,#{que_ex2}
+	                    ,#{que_ex3}
+	                    ,#{que_ex4}
+	                 )
+	</insert>
+	
+	<update id="testQueUpdate">
+	      update tb_test_que
+	           set test_que = #{test_que}
+	               ,que_ans = #{que_ans}
+	               ,que_ex1 = #{que_ex1}
+	               ,que_ex2 = #{que_ex2}
+	               ,que_ex3 = #{que_ex3}
+	               ,que_ex4 = #{que_ex4}
+	       where test_no = #{test_no}
+	         and test_que_no = #{test_que_no}
+	</update>
+	
+	<delete id="testQueDelete">
+	      delete from tb_test_que
+	       where test_que_no = #{test_que_no}
+	</delete>
+	
+	<!-- 그룹코드 목록 조회 -->
+	<select id="listTestQue" resultType="kr.happyjob.study.adm.model.TestQueModel">
+    <!-- kr.happy.study.adm.dao.TestPubDao.listTestQue -->
+    SELECT
+        l.lec_nm,
+        t.test_nm,
+        t.test_type,
+        tq.test_que,
+        tq.que_ans,
+        tq.que_ex1,
+        tq.que_ex2,
+        tq.que_ex3,
+        tq.que_ex4,
+        tq.test_no,
+        tq.test_que_no
+    FROM tb_test_que tq
+    INNER JOIN tb_test t ON t.test_no = tq.test_no
+    INNER JOIN tb_lecture l ON l.lec_no = t.lec_no
+</select>
+
+<!-- 시험 목록 디테일 -->
+	<select id="testQueDtl" resultType="kr.happyjob.study.adm.model.TestQueModel">
+	   /*kr.happyjob.study.adm.dao.TestPubDao.testQueDtl*/
+       SELECT
+       	tq.test_que_no,
+        t.test_no,
+    	t.test_nm,
+    	tq.que_ans,
+    	tq.test_que,
+    	tq.que_ex1,
+    	tq.que_ex2,
+    	tq.que_ex3,
+    	tq.que_ex4
+    from tb_test_que tq
+    INNER JOIN tb_test t 
+    ON t.test_no = tq.test_no
+    WHERE tq.test_que_no=#{test_que_no};
+	</select>
+</mapper>

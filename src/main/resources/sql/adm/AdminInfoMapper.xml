@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.adm.dao.AdminInfoDao">
+	<select id="adminList" resultType="kr.happyjob.study.adm.model.AdminInfoVO">
+		SELECT 	user_no
+			,	loginID
+    		,	name
+    		,	user_phone
+    		,	user_location
+    		,	user_type
+    		,	user_email
+    		,	DATE_FORMAT(created_at , '%Y-%m-%d') as created_at 
+    		,	comp_name
+		FROM	tb_userinfo
+		WHERE	user_type = 'C'	
+		<choose>
+			<when test="keyword != null and !keyword.equals('')">
+				AND name like CONCAT('%', #{keyword}, '%')				
+			</when>
+			<when test="(userType != null) and !userType.equals('')">
+				AND user_type = #{userType}				
+			</when>
+			<when test="searchstdate != null and !searchstdate.equals('')">
+				AND created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d') 			
+			</when>
+			<when test="(searcheddate != null) and (!searcheddate.equals(''))">
+			    AND created_at <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+			</when>
+		</choose>
+    	ORDER BY	user_no DESC
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+	
+	<select id="adminCnt" resultType="int">
+		SELECT 	count(*)
+		FROM 	tb_userinfo
+		WHERE	user_type = 'C'
+		<choose>
+			<when test="keyword != null and !keyword.equals('')">
+				AND name like CONCAT('%', #{keyword}, '%')				
+			</when>
+			<when test="(userType != null) and (!userType.equals(''))">
+				AND user_type = #{userType}				
+			</when>
+			<when test="(searchstdate != null) and (!searchstdate.equals(''))">
+				AND created_at <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d') 			
+			</when>
+			<when test="(searcheddate != null) and (!searcheddate.equals(''))">
+			    AND created_at <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+			</when>
+		</choose>		
+	</select>
+	
+	<select id="adminDetail" resultType="kr.happyjob.study.adm.model.AdminInfoVO">
+		SELECT 	user_no
+			,	loginID
+    		,	name
+    		,	user_phone
+    		,	user_location
+    		,	user_type
+    		,	user_email
+    		,	DATE_FORMAT(created_at , '%Y-%m-%d') as created_at 
+    		,	comp_name
+		FROM	tb_userinfo
+		WHERE	user_no = #{user_no}
+	</select>
+	
+	<update id="adminUpdate">
+		UPDATE	tb_userinfo
+		SET		name			=	#{name}
+    		,	user_phone		=	#{userPhone}
+    		,	user_location	=	#{userLocation}
+    		,	user_email		=	#{userEmail}
+		WHERE	user_no = #{user_no}
+	</update>
+	
+	<update id="adminDelete">
+		UPDATE	tb_userinfo
+		SET		password = ""
+			,	user_type = null
+			,	delete_yn = 'Y'
+		WHERE	user_no = #{user_no}
+	</update>
+</mapper>

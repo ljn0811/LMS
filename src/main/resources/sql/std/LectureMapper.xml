@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.LectureDao">
+
+	<!-- 강의목록 조회 -->
+	<select id="lectureList" resultType="kr.happyjob.study.std.model.LectureVO">
+		/*kr.happyjob.study.std.dao.LectureDao.lectureList*/
+		SELECT  le.lec_no
+	              ,le.lec_nm 
+	              ,ui.name
+	              ,le.classroom_no
+	              ,le.lec_cnt
+	              ,le.lec_max_cnt
+	              ,DATE_FORMAT(le.lec_start , '%Y-%m-%d') AS lec_start
+	              ,DATE_FORMAT(le.lec_end , '%Y-%m-%d') AS lec_end     
+	              ,li.apv
+	        FROM tb_lecture le
+                INNER JOIN tb_userinfo ui ON ui.user_no = le.user_no
+                LEFT OUTER JOIN tb_lecstd_info li ON le.lec_no = li.lec_no AND li.user_no = #{userno}
+ 			<where>
+ 				<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+ 			       AND le.lec_nm Like CONCAT('%', #{searchtitle}, '%')
+ 			   </if>
+ 			   <if test="(searchstdate != null) and (!searchstdate.equals(''))">
+ 			       AND le.lec_start <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+ 			   </if>
+  			   <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+ 			       AND le.lec_end <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+ 			   </if>	
+ 			    <if test="(searchstatus != null) and (searchstatus eq 'Y'.toString())">
+				   AND li.apv = #{searchstatus}
+				</if>
+				<if test="(searchstatus != null) and (searchstatus eq 'N'.toString())">
+				   AND li.apv = #{searchstatus}
+				</if>
+ 		</where>
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 강의목록 카운트 조회 -->
+	<select id="lectureCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.LectureDao.lectureCnt*/
+		SELECT COUNT(*)
+         FROM tb_lecture le
+                INNER JOIN tb_userinfo ui ON ui.user_no = le.user_no
+                LEFT OUTER JOIN tb_lecstd_info li ON le.lec_no = li.lec_no
+          <where>
+ 			  <if test="(searchtitle != null) and (!searchtitle.equals(''))">
+ 			       AND le.lec_nm LIKE CONCAT('%', #{searchtitle}, '%')
+ 			   </if>
+ 			   <if test="(searchstdate != null) and (!searchstdate.equals(''))">
+ 			       AND le.lec_start <![CDATA[>=]]> STR_TO_DATE(#{searchstdate}, '%Y-%m-%d')    
+ 			   </if>
+  			   <if test="(searcheddate != null) and (!searcheddate.equals(''))">
+ 			       AND le.lec_end <![CDATA[<=]]> STR_TO_DATE(#{searcheddate}, '%Y-%m-%d')    
+ 			   </if>	
+ 			   <if test="(searchstatus != null) and (searchstatus eq 'Y'.toString())">
+				   AND li.apv = #{searchstatus}
+				</if>
+				<if test="searchstatus != null and searchstatus.equals('N'.toString())">
+				    AND (li.apv is null or li.apv = #{searchstatus})
+				</if>
+ 			</where>
+	</select>
+	
+	<!-- 강의목록 상세조회 -->
+	<select id="lectureDtl" resultType="kr.happyjob.study.std.model.LectureVO">
+	   /*kr.happyjob.study.std.dao.LectureDao.lectureDtl*/
+        SELECT le.lec_no
+	                ,le.lec_nm 
+	                ,ui.name
+	                ,le.classroom_no
+	                ,le.lec_cnt
+	                ,le.lec_max_cnt
+	                ,DATE_FORMAT(le.lec_start , '%Y-%m-%d') AS lec_start
+	                ,DATE_FORMAT(le.lec_end , '%Y-%m-%d') AS lec_end     
+	                ,le.learn_plan
+	                ,le.lec_content
+	                ,le.learn_goal
+         FROM tb_lecture le
+                INNER JOIN tb_userinfo ui ON ui.user_no = le.user_no
+                WHERE lec_no = #{lec_no} 
+	</select>
+	
+	<!-- 수강신청 여부 N변경 -->
+	<insert id="insertStudentInfo">
+	    /*kr.happyjob.study.std.dao.LectureDao.lectureInsert*/
+	   INSERT INTO tb_lecstd_info
+	                  (   user_no
+	                     ,lec_no
+	                     ,apv
+	        ) VALUES (
+	                     #{userno} 
+	                    ,#{lec_no} 
+	                    ,'N'
+	                  )
+	</insert>
+	
+	<!-- 수강신청 인원증가 -->
+    <update id="lectureUpdate">
+	      UPDATE tb_lecture
+	           SET lec_cnt = lec_cnt + 1
+	       WHERE lec_no =  #{lec_no}
+	 </update>	
+	 
+	 <!-- 신청취소 수강생정보 삭제 -->
+	 <delete id="deleteStudentInfo">
+	      DELETE FROM tb_lecstd_info
+	       WHERE user_no = #{userno}
+	       AND lec_no = #{lecno}
+	</delete>
+	 
+	 <!-- 신청취소 인원감소 -->
+	 <update id="lectureDelete">
+	      UPDATE tb_lecture
+	           SET lec_cnt = lec_cnt - 1
+	       WHERE lec_no = #{lec_no}
+	 </update>
+	 
+	 <!-- 신청인원 -->
+	 <select id="getLecCnt" resultType="Integer">
+	   /*kr.happyjob.study.std.dao.LectureDao.getLecCnt*/
+        SELECT lec_cnt
+         FROM tb_lecture
+         WHERE lec_no = #{lecno} 
+	</select>
+	
+	<!-- 최대인원 -->
+	<select id="getLecMaxCnt" resultType="Integer">
+	   /*kr.happyjob.study.std.dao.LectureDao.getLecMaxCnt*/
+       SELECT lec_max_cnt
+         FROM tb_lecture
+         WHERE lec_no = #{lecno} 
+	</select>
+	
+</mapper>

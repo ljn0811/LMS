@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.ReportControlDao" >
+   
+   <select id="showLectureList" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+     
+      SELECT lec_id,
+      		 lec_name
+      FROM   tb_lec_info
+      WHERE  tutor_id = #{tutor_id}
+	</select>
+   
+   <select id="showLectureInfo" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+
+      SELECT  lec_name
+      		, tutor_name
+      		, DATE_FORMAT( c_st, '%Y.%m.%d') AS c_st
+      		, DATE_FORMAT( c_end,'%Y.%m.%d') AS c_end
+      		, lecrm_name
+      		, max_pnum
+      		, pre_pnum
+      		, lec_id
+        FROM  tb_lec_info
+    LEFT JOIN tb_lecrm
+        ON    tb_lec_info.lecrm_id = tb_lecrm.lecrm_id
+       WHERE  lec_id = #{lec_id}
+   </select>
+   
+   <select id="showProjectInfo" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+   		SELECT hwk_id,
+   			   lec_id,
+   			   hwk_name,
+   			   DATE_FORMAT(start, '%Y.%m.%d') AS start,
+   			   DATE_FORMAT(dead, '%Y.%m.%d') AS dead
+   		FROM   tb_hwk
+   		WHERE  lec_id = #{lec_id}
+   </select>
+   
+  <select id="showSubmitInfo" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+   		SELECT tb_userinfo.name, 
+   			   tb_hwk_submit.std_id, 
+   			   hwk_id, 
+   			   std_num
+   		FROM   tb_hwk_submit, 
+   			   tb_userinfo
+   		WHERE  hwk_id = #{hwk_id}
+   		AND    tb_hwk_submit.std_id = tb_userinfo.loginID
+   </select>
+   
+   <select id="showStudentCon" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+   		SELECT submit_con, submit_fname, submit_url, submit_fsize, DATE_FORMAT(submit_date, '%Y.%m.%d') AS submit_date, std_id, hwk_id
+		FROM tb_hwk_submit
+		WHERE std_id=#{std_id} AND hwk_id=#{hwk_id};
+   </select>
+   
+   <select id="showProjectInfo2" resultType="kr.happyjob.study.tut.model.ReportControlVo">
+   		SELECT hwk_name, hwk_con, DATE_FORMAT(start, '%Y.%m.%d') AS start, DATE_FORMAT(dead, '%Y.%m.%d') AS dead, hwk_fname, hwk_url, hwk_fsize, hwk_id, lec_id
+   		FROM tb_hwk
+   		WHERE hwk_id=#{hwk_id}
+   </select>
+   
+   
+   
+   <update id="updateProject">
+   		UPDATE tb_hwk
+		SET hwk_name = #{hwk_name}
+			,hwk_con=#{hwk_con}
+			, start=#{start}
+			, dead=#{dead}
+			, hwk_fname=#{hwk_fname}
+			, hwk_url=#{hwk_url}
+			, hwk_fsize=#{hwk_fsize}
+		WHERE hwk_id = #{hwk_id}
+   </update>
+   
+   
+   
+   
+   <insert id="makeProject">
+   		INSERT INTO tb_hwk(lec_id, hwk_name, hwk_con, start, dead, hwk_fname, hwk_url, hwk_fsize)
+		VALUES(#{lec_id}, #{hwk_name}, #{hwk_con}, #{start}, #{dead}, #{hwk_fname}, #{hwk_url}, #{hwk_fsize})
+   </insert>
+   
+   
+</mapper>
